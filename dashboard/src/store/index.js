@@ -1,12 +1,11 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import Summary from './summary'
 Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
     plugins: [],
-    engineInfo:{},
+    engineInfo: {},
   },
   mutations: {
     update(state, payload) {
@@ -14,14 +13,18 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    fetchEngineInfo(){
-     return window.ajax.getJSON(this.gateWayHref(instance) + "/api/sysInfo").then(engineInfo => commit("update", { engineInfo }))
+    fetchEngineInfo({ commit }) {
+      return window.ajax.getJSON("//" + location.host + "/api/sysInfo").then(engineInfo => commit("update", { engineInfo }))
     },
     fetchPlugins({ commit }) {
-      return window.ajax.getJSON("//" + location.host + "/api/plugins").then(plugins => commit("update", { plugins }))
+      return window.ajax.getJSON("//" + location.host + "/api/plugins").then(plugins => {
+        commit("update", { plugins })
+        for (let i = 0; i < plugins.length; i++) {
+          let s = document.createElement('script')
+          s.innerHTML = plugins[i].UI
+          document.body.appendChild(s)
+        }
+      })
     }
   },
-  modules: {
-    summary: Summary
-  }
 })

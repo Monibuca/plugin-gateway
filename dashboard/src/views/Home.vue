@@ -1,58 +1,50 @@
 <template>
     <div>
-        <Card title="system info">
-            <i-circle
-                dashboard
-                :size="250"
-                :trail-width="4"
-                :stroke-width="5"
-                :percent="Memory.Usage"
-                :stroke-color="['#FF0000','#00FF00']"
-            >
-                <div class="demo-Circle-custom">
-                    <h1>{{networkFormat(Memory.Used,"M")}}</h1>
-                    <p>内存使用</p>
-                    <span>
-                        占总内存
-                        <i>{{Memory.Usage.toFixed(2)}}%</i>
-                    </span>
-                </div>
-            </i-circle>
-            <i-circle
-                dashboard
-                :size="250"
-                :trail-width="4"
-                :stroke-width="5"
-                :percent="HardDisk.Usage"
-                :stroke-color="['#FF0000','#00FF00']"
-            >
-                <div class="demo-Circle-custom">
-                    <h1>{{networkFormat(HardDisk.Used,"M")}}</h1>
-                    <p>硬盘使用</p>
-                    <span>
-                        占总硬盘
-                        <i>{{HardDisk.Usage.toFixed(2)}}%</i>
-                    </span>
-                </div>
-            </i-circle>
-            <i-circle :percent="CPUUsage" dashboard :stroke-color="['#FF0000','#00FF00']">
-                <p>CPU使用率</p>
-                <span style="font-size:24px">{{CPUUsage.toFixed(2)}}%</span>
-            </i-circle>
-            <Table :columns="netWorkColumns" :data="NetWork"></Table>
-        </Card>
+        <i-circle
+            dashboard
+            :size="250"
+            :trail-width="4"
+            :stroke-width="5"
+            :percent="Memory.Usage"
+            :stroke-color="['#FF0000','#00FF00']"
+        >
+            <div class="demo-Circle-custom">
+                <h1>{{networkFormat(Memory.Used,"M")}}</h1>
+                <p>内存使用</p>
+                <span>
+                    占总内存
+                    <i>{{Memory.Usage.toFixed(2)}}%</i>
+                </span>
+            </div>
+        </i-circle>
+        <i-circle
+            dashboard
+            :size="250"
+            :trail-width="4"
+            :stroke-width="5"
+            :percent="HardDisk.Usage"
+            :stroke-color="['#FF0000','#00FF00']"
+        >
+            <div class="demo-Circle-custom">
+                <h1>{{networkFormat(HardDisk.Used,"M")}}</h1>
+                <p>硬盘使用</p>
+                <span>
+                    占总硬盘
+                    <i>{{HardDisk.Usage.toFixed(2)}}%</i>
+                </span>
+            </div>
+        </i-circle>
+        <i-circle :percent="CPUUsage" dashboard :stroke-color="['#FF0000','#00FF00']">
+            <p>CPU使用率</p>
+            <span style="font-size:24px">{{CPUUsage.toFixed(2)}}%</span>
+        </i-circle>
+        <Table :columns="netWorkColumns" :data="NetWork"></Table>
     </div>
 </template>
 
 
 <script>
-import { TinyArea } from "@antv/g2plot";
-import { mapActions, mapState } from "vuex";
-let tinyAreaReceives = [];
-let tinyAreaSents = [];
-let tinyAreaReceiveData = [];
-let tinyAreaSentData = [];
-let eventSource = null;
+let summaryES = null;
 const uintInc = {
     "": "K",
     K: "M",
@@ -64,47 +56,33 @@ export default {
     name: "home",
     data() {
         return {
+            Address: location.hostname,
             NetWork: [],
+            Rooms: [],
+            Memory: {
+                Used: 0,
+                Usage: 0
+            },
             CPUUsage: 0,
             HardDisk: {
                 Used: 0,
                 Usage: 0
             },
-            Memory: {
-                Used: 0,
-                Usage: 0
-            },
+            Children: {},
             netWorkColumns: [
                 {
                     title: "接口",
-                    render: (h, { row }) =>
-                        h("ul", [
-                            h("li", "name:" + row.Name),
-                            h("li", "recv:" + networkFormat(row.ReceiveSpeed)) +
-                                "/S",
-                            h("li", "sent:" + networkFormat(row.SentSpeed)) +
-                                "/S"
-                        ])
+                    key: "Name"
                 },
                 {
                     title: "接收",
-                    render(h, { index }) {
-                        return h("div", {
-                            attrs: {
-                                id: "receive" + index
-                            }
-                        });
-                    }
+                    render: (h, { row }) =>
+                        h("div", this.networkFormat(row.ReceiveSpeed)+ "/S")
                 },
                 {
                     title: "发送",
-                    render(h, { index }) {
-                        return h("div", {
-                            attrs: {
-                                id: "sent" + index
-                            }
-                        });
-                    }
+                    render: (h, { row }) =>
+                        h("div", this.networkFormat(row.SentSpeed)+ "/S")
                 }
             ]
         };
@@ -116,130 +94,56 @@ export default {
             }
             return value.toFixed(2).replace(".00", "") + unit + "B";
         },
-        ...mapActions(["fetchSummary", "stopFetchSummary"])
+        fetchSummary() {
+            summaryES = new EventSource("//" + location.host + "/api/summary");
+            summaryES.onmessage = evt => {
+                if (!evt.data) return;
+                let summary = JSON.parse(evt.data);
+                summary.Address = location.hostname;
+                if (!summary.Rooms) summary.Rooms = [];
+                summary.Rooms.sort((a, b) =>
+                    a.StreamPath > b.StreamPath ? 1 : -1
+                );
+                for (let name in summary) {
+                    this[name] = summary[name];
+                }
+            };
+        }
     },
     mounted() {
         this.fetchSummary();
     },
     computed: {
-        ...mapState({
-            Rooms: state => state.summary.Rooms || [],
-            Memory: state => state.summary.Memory,
-            CPUUsage: state => state.summary.CPUUsage,
-            HardDisk: state => state.summary.HardDisk,
-            NetWork: state => {
-                state.summary.NetWork.forEach((item, index) => {
-                    if (!tinyAreaReceiveData[index]) {
-                        tinyAreaReceiveData[index] = [];
-                    }
-                    tinyAreaReceiveData[index].push({
-                        index: new Date(),
-                        value: item.ReceiveSpeed
-                    });
-                    if (tinyAreaReceiveData[index].length > 200) {
-                        tinyAreaReceiveData[index].shift();
-                    }
-                    if (!tinyAreaSentData[index]) {
-                        tinyAreaSentData[index] = [];
-                    }
-                    tinyAreaSentData[index].push({
-                        index: new Date(),
-                        value: item.SentSpeed
-                    });
-                    if (tinyAreaSentData[index].length > 200) {
-                        tinyAreaSentData[index].shift();
-                    }
-                });
-                this.$nextTick(function() {
-                    for (let i = 0; i < this.NetWork.length; i++) {
-                        if (tinyAreaReceives[i]) {
-                            tinyAreaReceives[i].changeData(
-                                tinyAreaReceiveData[i]
-                            );
-                        } else {
-                            tinyAreaReceives[i] = new TinyArea(
-                                document.getElementById("receive" + i),
-                                {
-                                    width: 200,
-                                    height: 50,
-                                    data: tinyAreaReceiveData[i],
-                                    xField: "index",
-                                    yField: "value"
-                                }
-                            );
-                            tinyAreaReceives[i].render();
-                        }
-                        if (tinyAreaSents[i]) {
-                            tinyAreaSents[i].changeData(tinyAreaSentData[i]);
-                        } else {
-                            tinyAreaSents[i] = new TinyArea(
-                                document.getElementById("sent" + i),
-                                {
-                                    width: 200,
-                                    height: 50,
-                                    data: tinyAreaSentData[i],
-                                    xField: "index",
-                                    yField: "value"
-                                }
-                            );
-                            tinyAreaSents[i].render();
-                        }
-                    }
-                });
-                return state.summary.NetWork;
-            },
-            // cpuStatus: state => {
-            //     if (state.summary.CPUUsage > 99) return "error";
-            //     return state.summary.CPUUsage > 50 ? "warning" : "success";
-            // },
-            // memoryStatus(state) {
-            //     if (state.summary.CPUUsage > 99) return "error";
-            //     return state.summary.CPUUsage > 50 ? "warning" : "success";
-            // },
-            // hardDiskStatus(state) {
-            //     if (state.summary.CPUUsage > 99) return "error";
-            //     return state.summary.CPUUsage > 50 ? "warning" : "success";
-            // },
-            totalInNetSpeed(state) {
-                return (
-                    this.networkFormat(
-                        state.summary.NetWork
-                            ? state.summary.NetWork.reduce(
-                                  (aac, c) => aac + c.ReceiveSpeed,
-                                  0
-                              )
-                            : 0
-                    ) + "/S"
-                );
-            },
-            totalOutNetSpeed(state) {
-                return (
-                    this.networkFormat(
-                        state.summary.NetWork
-                            ? state.summary.NetWork.reduce(
-                                  (aac, c) => aac + c.SentSpeed,
-                                  0
-                              )
-                            : 0
-                    ) + "/S"
-                );
-            }
-        })
+        totalInNetSpeed() {
+            return (
+                this.networkFormat(
+                    this.NetWork
+                        ? this.NetWork.reduce(
+                              (aac, c) => aac + c.ReceiveSpeed,
+                              0
+                          )
+                        : 0
+                ) + "/S"
+            );
+        },
+        totalOutNetSpeed() {
+            return (
+                this.networkFormat(
+                    this.NetWork
+                        ? this.NetWork.reduce((aac, c) => aac + c.SentSpeed, 0)
+                        : 0
+                ) + "/S"
+            );
+        }
     },
     destroyed() {
-        tinyAreaReceiveData.length = 0;
-        tinyAreaSentData.length = 0;
-        tinyAreaReceives.forEach(_ => _.destroy());
-        tinyAreaReceives.length = 0;
-        tinyAreaSents.forEach(_ => _.destroy());
-        tinyAreaSents.length = 0;
-        eventSource.close();
-        this.stopFetchSummary();
+        summaryES.close();
     }
 };
 </script>
 
 <style lang="less">
+@import url("//unpkg.com/view-design/dist/styles/iview.css");
 .demo-Circle-custom {
     & h1 {
         color: #3f414d;

@@ -5,7 +5,8 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "home:build": "vue-cli-service build --dest ui --target wc --name plugin-gateway src/views/Home.vue"
   },
   "dependencies": {
     "@antv/g2plot": "^0.11.32",

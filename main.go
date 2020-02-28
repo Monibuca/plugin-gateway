@@ -24,10 +24,12 @@ func init() {
 	_, currentFilePath, _, _ := runtime.Caller(0)
 	dashboardPath = path.Join(path.Dir(currentFilePath), "./dashboard/dist")
 	log.Println(dashboardPath)
+	ui := path.Join(path.Dir(currentFilePath), "./dashboard/ui/plugin-gateway.min.js")
 	InstallPlugin(&PluginConfig{
 		Name:   "GateWay",
 		Type:   PLUGIN_HOOK,
 		Config: config,
+		UI:     ui,
 		Run:    run,
 	})
 }
@@ -108,6 +110,7 @@ func getPlugins(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	var plugins []interface{}
 	for _, plugin := range Plugins {
+		log.Println(plugin.UI)
 		bytes, err := ioutil.ReadFile(plugin.UI)
 		if err == nil {
 			info := &struct {
