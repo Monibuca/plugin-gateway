@@ -1282,12 +1282,12 @@ function normalizeComponent (
   }
 }
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"3045a737-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/views/Home.vue?vue&type=template&id=edfc5318&shadow
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"3045a737-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/views/Home.vue?vue&type=template&id=b33b3036&shadow
 var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.Memory.Usage,"stroke-color":['#FF0000','#00FF00']}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.networkFormat(_vm.Memory.Used,"M")))]),_c('p',[_vm._v("内存使用")]),_c('span',[_vm._v(" 占总内存 "),_c('i',[_vm._v(_vm._s(_vm.Memory.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.HardDisk.Usage,"stroke-color":['#FF0000','#00FF00']}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.networkFormat(_vm.HardDisk.Used,"M")))]),_c('p',[_vm._v("硬盘使用")]),_c('span',[_vm._v(" 占总硬盘 "),_c('i',[_vm._v(_vm._s(_vm.HardDisk.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"percent":_vm.CPUUsage,"dashboard":"","stroke-color":['#FF0000','#00FF00']}},[_c('p',[_vm._v("CPU使用率")]),_c('span',{staticStyle:{"font-size":"24px"}},[_vm._v(_vm._s(_vm.CPUUsage.toFixed(2))+"%")])]),_c('Table',{attrs:{"columns":_vm.netWorkColumns,"data":_vm.NetWork}})],1)}
 var staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./src/views/Home.vue?vue&type=template&id=edfc5318&shadow
+// CONCATENATED MODULE: ./src/views/Home.vue?vue&type=template&id=b33b3036&shadow
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.array.reduce.js
 var es_array_reduce = __webpack_require__("13d5");
@@ -1423,11 +1423,6 @@ var uintInc = {
     }
 
   },
-
-  mounted() {
-    this.fetchSummary();
-  },
-
   computed: {
     totalInNetSpeed() {
       return this.networkFormat(this.NetWork ? this.NetWork.reduce((aac, c) => aac + c.ReceiveSpeed, 0) : 0) + "/S";
@@ -1439,7 +1434,16 @@ var uintInc = {
 
   },
 
-  destroyed() {
+  mounted() {
+    console.log("mounted");
+    this.fetchSummary();
+  },
+
+  activated() {
+    console.log("activated");
+  },
+
+  deactivated() {
     summaryES.close();
   }
 
@@ -1751,7 +1755,7 @@ module.exports = function (it) {
 // Imports
 var ___CSS_LOADER_API_IMPORT___ = __webpack_require__("24fb");
 exports = ___CSS_LOADER_API_IMPORT___(false);
-exports.push([module.i, "@import url(//unpkg.com/view-design/dist/styles/iview.css);"]);
+exports.push([module.i, "@import url(/iview.css);"]);
 // Module
 exports.push([module.i, ".demo-Circle-custom h1{color:#3f414d;font-size:28px;font-weight:400}.demo-Circle-custom p{color:#657180;font-size:14px;margin:10px 0 15px}.demo-Circle-custom span{display:block;padding-top:15px;color:#657180;font-size:14px}.demo-Circle-custom span :before{content:\"\";display:block;width:50px;height:1px;margin:0 auto;background:#e0e3e6;position:relative;top:-15px}.demo-Circle-custom span i{font-style:normal;color:#3f414d}", ""]);
 // Exports

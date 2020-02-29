@@ -1,6 +1,7 @@
 package gatewayplugin
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	. "github.com/Monibuca/engine"
 	. "github.com/Monibuca/engine/util"
 )
@@ -24,13 +26,13 @@ func init() {
 	_, currentFilePath, _, _ := runtime.Caller(0)
 	dashboardPath = path.Join(path.Dir(currentFilePath), "./dashboard/dist")
 	log.Println(dashboardPath)
-	ui := path.Join(path.Dir(currentFilePath), "./dashboard/ui/plugin-gateway.min.js")
 	InstallPlugin(&PluginConfig{
-		Name:   "GateWay",
-		Type:   PLUGIN_HOOK,
-		Config: config,
-		UI:     ui,
-		Run:    run,
+		Name:    "GateWay",
+		Type:    PLUGIN_HOOK,
+		Config:  config,
+		UI:      path.Join(path.Dir(currentFilePath), "./dashboard/ui/plugin-gateway.min.js"),
+		Version: "1.0.0",
+		Run:     run,
 	})
 }
 func run() {
@@ -44,6 +46,7 @@ func run() {
 	log.Printf("server gateway start at %s", config.ListenAddr)
 	log.Fatal(http.ListenAndServe(config.ListenAddr, nil))
 }
+
 func getConfig(w http.ResponseWriter, r *http.Request) {
 	w.Write(ConfigRaw)
 }
@@ -106,19 +109,33 @@ func sysInfo(w http.ResponseWriter, r *http.Request) {
 		_, err = w.Write(bytes)
 	}
 }
+
+// PluginInfo 插件信息
+type PluginInfo struct {
+	Name    string //插件名称
+	Type    byte   //类型
+	Config  string //插件配置
+	UI      string //界面路径
+	Version string //插件版本
+}
+
 func getPlugins(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	var plugins []interface{}
+	var plugins []*PluginInfo
 	for _, plugin := range Plugins {
-		log.Println(plugin.UI)
-		bytes, err := ioutil.ReadFile(plugin.UI)
-		if err == nil {
-			info := &struct {
-				Name string
-				UI   string
-			}{Name: plugin.Name, UI: string(bytes)}
-			plugins = append(plugins, info)
+		p := &PluginInfo{
+			plugin.Name, plugin.Type, "", "", plugin.Version,
 		}
+		if plugin.UI != "" {
+			if bytes, err := ioutil.ReadFile(plugin.UI); err == nil {
+				p.UI = string(bytes)
+			}
+		}
+		var out bytes.Buffer
+		if toml.NewEncoder(&out).Encode(plugin.Config) == nil {
+			p.Config = out.String()
+		}
+		plugins = append(plugins, p)
 	}
 	bytes, err := json.Marshal(plugins)
 	if err != nil {

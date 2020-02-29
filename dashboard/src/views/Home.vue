@@ -77,12 +77,12 @@ export default {
                 {
                     title: "接收",
                     render: (h, { row }) =>
-                        h("div", this.networkFormat(row.ReceiveSpeed)+ "/S")
+                        h("div", this.networkFormat(row.ReceiveSpeed) + "/S")
                 },
                 {
                     title: "发送",
                     render: (h, { row }) =>
-                        h("div", this.networkFormat(row.SentSpeed)+ "/S")
+                        h("div", this.networkFormat(row.SentSpeed) + "/S")
                 }
             ]
         };
@@ -110,9 +110,6 @@ export default {
             };
         }
     },
-    mounted() {
-        this.fetchSummary();
-    },
     computed: {
         totalInNetSpeed() {
             return (
@@ -136,14 +133,17 @@ export default {
             );
         }
     },
-    destroyed() {
+    mounted() {
+        this.fetchSummary();
+    },
+    deactivated() {
         summaryES.close();
     }
 };
 </script>
 
 <style lang="less">
-@import url("//unpkg.com/view-design/dist/styles/iview.css");
+@import url("/iview.css");
 .demo-Circle-custom {
     & h1 {
         color: #3f414d;

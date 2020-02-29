@@ -54,7 +54,10 @@
         <Layout>
             <Sider ref="side1" hide-trigger collapsible :collapsed-width="78" v-model="isCollapsed">
                 <Menu theme="dark" width="auto" :class="menuitemClasses" @on-select="selectPlugin">
-                    <MenuItem :name="item.Name" v-for="item in plugins" :key="item.Name">
+                    <MenuItem name="#">
+                        <span>插件列表</span>
+                    </MenuItem>
+                    <MenuItem :name="item.Name" v-for="item in plugins.filter(x=>x.UI)" :key="item.Name">
                         <span>{{item.Name}}</span>
                     </MenuItem>
                 </Menu>
@@ -68,10 +71,16 @@
                         type="md-menu"
                         size="24"
                     ></Icon>
-                    Monibuca {{engineInfo.Version}} 控制台 启动时间：{{engineInfo.StartTime}}
+                    Monibuca 控制台 引擎版本： v{{engineInfo.Version}} 启动时间：{{engineInfo.StartTime}}
                 </Header>
                 <Content :style="{margin: '20px', background: '#fff', minHeight: '260px'}">
-                    <component :is="'plugin-'+currentPlugin" />
+                    <List header="已启用的插件：" v-if="currentPlugin=='#'" border>
+                        <ListItem v-for="item in plugins" :key="item.Name">
+                            <ListItemMeta :title="item.Name" :description="item.Version"></ListItemMeta>
+                            <pre>{{item.Config}}</pre>
+                        </ListItem>
+                    </List>
+                    <component :is="'plugin-'+currentPlugin" v-else/>
                 </Content>
             </Layout>
         </Layout>
@@ -83,7 +92,7 @@ export default {
     data() {
         return {
             isCollapsed: false,
-            currentPlugin: null
+            currentPlugin: "#"
         };
     },
     computed: {
