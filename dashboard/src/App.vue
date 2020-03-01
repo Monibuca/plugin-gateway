@@ -80,7 +80,7 @@
                             <pre>{{item.Config}}</pre>
                         </ListItem>
                     </List>
-                    <component :is="'plugin-'+currentPlugin" v-else/>
+                    <component :is="'plugin-'+currentPlugin" v-else v-bind="currentConfig"/>
                 </Content>
             </Layout>
         </Layout>
@@ -88,11 +88,13 @@
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import toml from "@iarna/toml"
 export default {
     data() {
         return {
             isCollapsed: false,
-            currentPlugin: "#"
+            currentPlugin: "#",
+            currentConfig:{}
         };
     },
     computed: {
@@ -105,7 +107,7 @@ export default {
         },
         menuitemClasses() {
             return ["menu-item", this.isCollapsed ? "collapsed-menu" : ""];
-        }
+        },
     },
     mounted() {
         this.fetchEngineInfo();
@@ -115,10 +117,16 @@ export default {
         ...mapActions(["fetchEngineInfo", "fetchPlugins"]),
         selectPlugin(name) {
             this.currentPlugin = name.toLowerCase();
+            for(let i=0;i<this.plugins.length;i++){
+                if(this.plugins[i].Name == name){
+                    this.currentConfig=  toml.parse(this.plugins[i].Config)
+                    break
+                }
+            }
         },
         collapsedSider() {
             this.$refs.side1.toggleCollapse();
-        }
+        },
     }
 };
 </script>

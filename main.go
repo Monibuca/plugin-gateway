@@ -25,7 +25,6 @@ var (
 func init() {
 	_, currentFilePath, _, _ := runtime.Caller(0)
 	dashboardPath = path.Join(path.Dir(currentFilePath), "./dashboard/dist")
-	log.Println(dashboardPath)
 	InstallPlugin(&PluginConfig{
 		Name:    "GateWay",
 		Type:    PLUGIN_HOOK,
@@ -39,7 +38,6 @@ func run() {
 	http.HandleFunc("/api/sysInfo", sysInfo)
 	http.HandleFunc("/api/stop", stopPublish)
 	http.HandleFunc("/api/summary", summary)
-	http.HandleFunc("/api/logs", watchLogs)
 	http.HandleFunc("/api/config", getConfig)
 	http.HandleFunc("/api/plugins", getPlugins)
 	http.HandleFunc("/", website)
@@ -50,10 +48,7 @@ func run() {
 func getConfig(w http.ResponseWriter, r *http.Request) {
 	w.Write(ConfigRaw)
 }
-func watchLogs(w http.ResponseWriter, r *http.Request) {
-	AddWriter(NewSSE(w, r.Context()))
-	<-r.Context().Done()
-}
+
 func stopPublish(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
