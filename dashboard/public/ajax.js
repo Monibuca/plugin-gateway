@@ -234,7 +234,9 @@
 
         // send
         xhr.send(settings.data ? settings.data : null);
-
+        settings.promise.abort = function(){
+            xhr.abort()
+        }
         return settings.promise;
     };
 
