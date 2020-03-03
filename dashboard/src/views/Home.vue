@@ -9,7 +9,7 @@
             :stroke-color="['#FF0000','#00FF00']"
         >
             <div class="demo-Circle-custom">
-                <h1>{{networkFormat(Memory.Used,"M")}}</h1>
+                <h1>{{unitFormat(Memory.Used,"M")}}</h1>
                 <p>内存使用</p>
                 <span>
                     占总内存
@@ -26,7 +26,7 @@
             :stroke-color="['#FF0000','#00FF00']"
         >
             <div class="demo-Circle-custom">
-                <h1>{{networkFormat(HardDisk.Used,"M")}}</h1>
+                <h1>{{unitFormat(HardDisk.Used,"M")}}</h1>
                 <p>硬盘使用</p>
                 <span>
                     占总硬盘
@@ -45,13 +45,6 @@
 
 <script>
 let summaryES = null;
-const uintInc = {
-    "": "K",
-    K: "M",
-    M: "G",
-    G: null
-};
-
 export default {
     name: "home",
     data() {
@@ -77,23 +70,18 @@ export default {
                 {
                     title: "接收",
                     render: (h, { row }) =>
-                        h("div", this.networkFormat(row.ReceiveSpeed) + "/S")
+                        h("div", this.unitFormat(row.ReceiveSpeed) + "/S")
                 },
                 {
                     title: "发送",
                     render: (h, { row }) =>
-                        h("div", this.networkFormat(row.SentSpeed) + "/S")
+                        h("div", this.unitFormat(row.SentSpeed) + "/S")
                 }
             ]
         };
     },
     methods: {
-        networkFormat(value, unit = "") {
-            if (value > 1024 && uintInc[unit]) {
-                return this.networkFormat(value / 1024, uintInc[unit]);
-            }
-            return value.toFixed(2).replace(".00", "") + unit + "B";
-        },
+        unitFormat: window.unitFormat,
         fetchSummary() {
             summaryES = new EventSource("//" + location.host + "/api/summary");
             summaryES.onmessage = evt => {
@@ -113,7 +101,7 @@ export default {
     computed: {
         totalInNetSpeed() {
             return (
-                this.networkFormat(
+                this.unitFormat(
                     this.NetWork
                         ? this.NetWork.reduce(
                               (aac, c) => aac + c.ReceiveSpeed,
@@ -125,7 +113,7 @@ export default {
         },
         totalOutNetSpeed() {
             return (
-                this.networkFormat(
+                this.unitFormat(
                     this.NetWork
                         ? this.NetWork.reduce((aac, c) => aac + c.SentSpeed, 0)
                         : 0

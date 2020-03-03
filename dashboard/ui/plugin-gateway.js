@@ -130,28 +130,6 @@ module.exports = !DESCRIPTORS && !fails(function () {
 
 /***/ }),
 
-/***/ "1148":
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var toInteger = __webpack_require__("a691");
-var requireObjectCoercible = __webpack_require__("1d80");
-
-// `String.prototype.repeat` method implementation
-// https://tc39.github.io/ecma262/#sec-string.prototype.repeat
-module.exports = ''.repeat || function repeat(count) {
-  var str = String(requireObjectCoercible(this));
-  var result = '';
-  var n = toInteger(count);
-  if (n < 0 || n == Infinity) throw RangeError('Wrong number of repetitions');
-  for (;n > 0; (n >>>= 1) && (str += str)) if (n & 1) result += str;
-  return result;
-};
-
-
-/***/ }),
-
 /***/ "13d5":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -172,35 +150,6 @@ $({ target: 'Array', proto: true, forced: !STRICT_METHOD || !USES_TO_LENGTH }, {
     return $reduce(this, callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
   }
 });
-
-
-/***/ }),
-
-/***/ "14c3":
-/***/ (function(module, exports, __webpack_require__) {
-
-var classof = __webpack_require__("c6b6");
-var regexpExec = __webpack_require__("9263");
-
-// `RegExpExec` abstract operation
-// https://tc39.github.io/ecma262/#sec-regexpexec
-module.exports = function (R, S) {
-  var exec = R.exec;
-  if (typeof exec === 'function') {
-    var result = exec.call(R, S);
-    if (typeof result !== 'object') {
-      throw TypeError('RegExp exec method returned something other than an Object or null');
-    }
-    return result;
-  }
-
-  if (classof(R) !== 'RegExp') {
-    throw TypeError('RegExp#exec called on incompatible receiver');
-  }
-
-  return regexpExec.call(R, S);
-};
-
 
 
 /***/ }),
@@ -539,23 +488,6 @@ function addStyle (obj /* StyleObjectPart */, shadowRoot) {
 
 /***/ }),
 
-/***/ "408a":
-/***/ (function(module, exports, __webpack_require__) {
-
-var classof = __webpack_require__("c6b6");
-
-// `thisNumberValue` abstract operation
-// https://tc39.github.io/ecma262/#sec-thisnumbervalue
-module.exports = function (value) {
-  if (typeof value != 'number' && classof(value) != 'Number') {
-    throw TypeError('Incorrect invocation');
-  }
-  return +value;
-};
-
-
-/***/ }),
-
 /***/ "428f":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -582,20 +514,6 @@ module.exports = fails(function () {
 }) ? function (it) {
   return classof(it) == 'String' ? split.call(it, '') : Object(it);
 } : Object;
-
-
-/***/ }),
-
-/***/ "4930":
-/***/ (function(module, exports, __webpack_require__) {
-
-var fails = __webpack_require__("d039");
-
-module.exports = !!Object.getOwnPropertySymbols && !fails(function () {
-  // Chrome 38 Symbol has incorrect toString conversion
-  // eslint-disable-next-line no-undef
-  return !String(Symbol());
-});
 
 
 /***/ }),
@@ -703,149 +621,6 @@ var hasOwnProperty = {}.hasOwnProperty;
 module.exports = function (it, key) {
   return hasOwnProperty.call(it, key);
 };
-
-
-/***/ }),
-
-/***/ "5319":
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var fixRegExpWellKnownSymbolLogic = __webpack_require__("d784");
-var anObject = __webpack_require__("825a");
-var toObject = __webpack_require__("7b0b");
-var toLength = __webpack_require__("50c4");
-var toInteger = __webpack_require__("a691");
-var requireObjectCoercible = __webpack_require__("1d80");
-var advanceStringIndex = __webpack_require__("8aa5");
-var regExpExec = __webpack_require__("14c3");
-
-var max = Math.max;
-var min = Math.min;
-var floor = Math.floor;
-var SUBSTITUTION_SYMBOLS = /\$([$&'`]|\d\d?|<[^>]*>)/g;
-var SUBSTITUTION_SYMBOLS_NO_NAMED = /\$([$&'`]|\d\d?)/g;
-
-var maybeToString = function (it) {
-  return it === undefined ? it : String(it);
-};
-
-// @@replace logic
-fixRegExpWellKnownSymbolLogic('replace', 2, function (REPLACE, nativeReplace, maybeCallNative, reason) {
-  var REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE = reason.REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE;
-  var REPLACE_KEEPS_$0 = reason.REPLACE_KEEPS_$0;
-  var UNSAFE_SUBSTITUTE = REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE ? '$' : '$0';
-
-  return [
-    // `String.prototype.replace` method
-    // https://tc39.github.io/ecma262/#sec-string.prototype.replace
-    function replace(searchValue, replaceValue) {
-      var O = requireObjectCoercible(this);
-      var replacer = searchValue == undefined ? undefined : searchValue[REPLACE];
-      return replacer !== undefined
-        ? replacer.call(searchValue, O, replaceValue)
-        : nativeReplace.call(String(O), searchValue, replaceValue);
-    },
-    // `RegExp.prototype[@@replace]` method
-    // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@replace
-    function (regexp, replaceValue) {
-      if (
-        (!REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE && REPLACE_KEEPS_$0) ||
-        (typeof replaceValue === 'string' && replaceValue.indexOf(UNSAFE_SUBSTITUTE) === -1)
-      ) {
-        var res = maybeCallNative(nativeReplace, regexp, this, replaceValue);
-        if (res.done) return res.value;
-      }
-
-      var rx = anObject(regexp);
-      var S = String(this);
-
-      var functionalReplace = typeof replaceValue === 'function';
-      if (!functionalReplace) replaceValue = String(replaceValue);
-
-      var global = rx.global;
-      if (global) {
-        var fullUnicode = rx.unicode;
-        rx.lastIndex = 0;
-      }
-      var results = [];
-      while (true) {
-        var result = regExpExec(rx, S);
-        if (result === null) break;
-
-        results.push(result);
-        if (!global) break;
-
-        var matchStr = String(result[0]);
-        if (matchStr === '') rx.lastIndex = advanceStringIndex(S, toLength(rx.lastIndex), fullUnicode);
-      }
-
-      var accumulatedResult = '';
-      var nextSourcePosition = 0;
-      for (var i = 0; i < results.length; i++) {
-        result = results[i];
-
-        var matched = String(result[0]);
-        var position = max(min(toInteger(result.index), S.length), 0);
-        var captures = [];
-        // NOTE: This is equivalent to
-        //   captures = result.slice(1).map(maybeToString)
-        // but for some reason `nativeSlice.call(result, 1, result.length)` (called in
-        // the slice polyfill when slicing native arrays) "doesn't work" in safari 9 and
-        // causes a crash (https://pastebin.com/N21QzeQA) when trying to debug it.
-        for (var j = 1; j < result.length; j++) captures.push(maybeToString(result[j]));
-        var namedCaptures = result.groups;
-        if (functionalReplace) {
-          var replacerArgs = [matched].concat(captures, position, S);
-          if (namedCaptures !== undefined) replacerArgs.push(namedCaptures);
-          var replacement = String(replaceValue.apply(undefined, replacerArgs));
-        } else {
-          replacement = getSubstitution(matched, S, position, captures, namedCaptures, replaceValue);
-        }
-        if (position >= nextSourcePosition) {
-          accumulatedResult += S.slice(nextSourcePosition, position) + replacement;
-          nextSourcePosition = position + matched.length;
-        }
-      }
-      return accumulatedResult + S.slice(nextSourcePosition);
-    }
-  ];
-
-  // https://tc39.github.io/ecma262/#sec-getsubstitution
-  function getSubstitution(matched, str, position, captures, namedCaptures, replacement) {
-    var tailPos = position + matched.length;
-    var m = captures.length;
-    var symbols = SUBSTITUTION_SYMBOLS_NO_NAMED;
-    if (namedCaptures !== undefined) {
-      namedCaptures = toObject(namedCaptures);
-      symbols = SUBSTITUTION_SYMBOLS;
-    }
-    return nativeReplace.call(replacement, symbols, function (match, ch) {
-      var capture;
-      switch (ch.charAt(0)) {
-        case '$': return '$';
-        case '&': return matched;
-        case '`': return str.slice(0, position);
-        case "'": return str.slice(tailPos);
-        case '<':
-          capture = namedCaptures[ch.slice(1, -1)];
-          break;
-        default: // \d\d?
-          var n = +ch;
-          if (n === 0) return match;
-          if (n > m) {
-            var f = floor(n / 10);
-            if (f === 0) return match;
-            if (f <= m) return captures[f - 1] === undefined ? ch.charAt(1) : captures[f - 1] + ch.charAt(1);
-            return match;
-          }
-          capture = captures[n - 1];
-      }
-      return capture === undefined ? '' : capture;
-    });
-  }
-});
 
 
 /***/ }),
@@ -1282,12 +1057,12 @@ function normalizeComponent (
   }
 }
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"3045a737-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/views/Home.vue?vue&type=template&id=b33b3036&shadow
-var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.Memory.Usage,"stroke-color":['#FF0000','#00FF00']}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.networkFormat(_vm.Memory.Used,"M")))]),_c('p',[_vm._v("内存使用")]),_c('span',[_vm._v(" 占总内存 "),_c('i',[_vm._v(_vm._s(_vm.Memory.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.HardDisk.Usage,"stroke-color":['#FF0000','#00FF00']}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.networkFormat(_vm.HardDisk.Used,"M")))]),_c('p',[_vm._v("硬盘使用")]),_c('span',[_vm._v(" 占总硬盘 "),_c('i',[_vm._v(_vm._s(_vm.HardDisk.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"percent":_vm.CPUUsage,"dashboard":"","stroke-color":['#FF0000','#00FF00']}},[_c('p',[_vm._v("CPU使用率")]),_c('span',{staticStyle:{"font-size":"24px"}},[_vm._v(_vm._s(_vm.CPUUsage.toFixed(2))+"%")])]),_c('Table',{attrs:{"columns":_vm.netWorkColumns,"data":_vm.NetWork}})],1)}
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"187caa46-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/views/Home.vue?vue&type=template&id=946b1106&shadow
+var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.Memory.Usage,"stroke-color":['#FF0000','#00FF00']}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.unitFormat(_vm.Memory.Used,"M")))]),_c('p',[_vm._v("内存使用")]),_c('span',[_vm._v(" 占总内存 "),_c('i',[_vm._v(_vm._s(_vm.Memory.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.HardDisk.Usage,"stroke-color":['#FF0000','#00FF00']}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.unitFormat(_vm.HardDisk.Used,"M")))]),_c('p',[_vm._v("硬盘使用")]),_c('span',[_vm._v(" 占总硬盘 "),_c('i',[_vm._v(_vm._s(_vm.HardDisk.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"percent":_vm.CPUUsage,"dashboard":"","stroke-color":['#FF0000','#00FF00']}},[_c('p',[_vm._v("CPU使用率")]),_c('span',{staticStyle:{"font-size":"24px"}},[_vm._v(_vm._s(_vm.CPUUsage.toFixed(2))+"%")])]),_c('Table',{attrs:{"columns":_vm.netWorkColumns,"data":_vm.NetWork}})],1)}
 var staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./src/views/Home.vue?vue&type=template&id=b33b3036&shadow
+// CONCATENATED MODULE: ./src/views/Home.vue?vue&type=template&id=946b1106&shadow
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.array.reduce.js
 var es_array_reduce = __webpack_require__("13d5");
@@ -1295,15 +1070,7 @@ var es_array_reduce = __webpack_require__("13d5");
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.array.sort.js
 var es_array_sort = __webpack_require__("4e82");
 
-// EXTERNAL MODULE: ./node_modules/core-js/modules/es.number.to-fixed.js
-var es_number_to_fixed = __webpack_require__("b680");
-
-// EXTERNAL MODULE: ./node_modules/core-js/modules/es.string.replace.js
-var es_string_replace = __webpack_require__("5319");
-
 // CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js??ref--12-0!./node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/views/Home.vue?vue&type=script&lang=js&shadow
-
-
 
 
 //
@@ -1352,12 +1119,6 @@ var es_string_replace = __webpack_require__("5319");
 //
 //
 var summaryES = null;
-var uintInc = {
-  "": "K",
-  K: "M",
-  M: "G",
-  G: null
-};
 /* harmony default export */ var Homevue_type_script_lang_js_shadow = ({
   name: "home",
 
@@ -1383,28 +1144,20 @@ var uintInc = {
         title: "接收",
         render: (h, _ref) => {
           var row = _ref.row;
-          return h("div", this.networkFormat(row.ReceiveSpeed) + "/S");
+          return h("div", this.unitFormat(row.ReceiveSpeed) + "/S");
         }
       }, {
         title: "发送",
         render: (h, _ref2) => {
           var row = _ref2.row;
-          return h("div", this.networkFormat(row.SentSpeed) + "/S");
+          return h("div", this.unitFormat(row.SentSpeed) + "/S");
         }
       }]
     };
   },
 
   methods: {
-    networkFormat(value) {
-      var unit = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "";
-
-      if (value > 1024 && uintInc[unit]) {
-        return this.networkFormat(value / 1024, uintInc[unit]);
-      }
-
-      return value.toFixed(2).replace(".00", "") + unit + "B";
-    },
+    unitFormat: window.unitFormat,
 
     fetchSummary() {
       summaryES = new EventSource("//" + location.host + "/api/summary");
@@ -1425,22 +1178,17 @@ var uintInc = {
   },
   computed: {
     totalInNetSpeed() {
-      return this.networkFormat(this.NetWork ? this.NetWork.reduce((aac, c) => aac + c.ReceiveSpeed, 0) : 0) + "/S";
+      return this.unitFormat(this.NetWork ? this.NetWork.reduce((aac, c) => aac + c.ReceiveSpeed, 0) : 0) + "/S";
     },
 
     totalOutNetSpeed() {
-      return this.networkFormat(this.NetWork ? this.NetWork.reduce((aac, c) => aac + c.SentSpeed, 0) : 0) + "/S";
+      return this.unitFormat(this.NetWork ? this.NetWork.reduce((aac, c) => aac + c.SentSpeed, 0) : 0) + "/S";
     }
 
   },
 
   mounted() {
-    console.log("mounted");
     this.fetchSummary();
-  },
-
-  activated() {
-    console.log("activated");
   },
 
   deactivated() {
@@ -1500,40 +1248,6 @@ module.exports = function (bitmap, value) {
     writable: !(bitmap & 4),
     value: value
   };
-};
-
-
-/***/ }),
-
-/***/ "6547":
-/***/ (function(module, exports, __webpack_require__) {
-
-var toInteger = __webpack_require__("a691");
-var requireObjectCoercible = __webpack_require__("1d80");
-
-// `String.prototype.{ codePointAt, at }` methods implementation
-var createMethod = function (CONVERT_TO_STRING) {
-  return function ($this, pos) {
-    var S = String(requireObjectCoercible($this));
-    var position = toInteger(pos);
-    var size = S.length;
-    var first, second;
-    if (position < 0 || position >= size) return CONVERT_TO_STRING ? '' : undefined;
-    first = S.charCodeAt(position);
-    return first < 0xD800 || first > 0xDBFF || position + 1 === size
-      || (second = S.charCodeAt(position + 1)) < 0xDC00 || second > 0xDFFF
-        ? CONVERT_TO_STRING ? S.charAt(position) : first
-        : CONVERT_TO_STRING ? S.slice(position, position + 2) : (first - 0xD800 << 10) + (second - 0xDC00) + 0x10000;
-  };
-};
-
-module.exports = {
-  // `String.prototype.codePointAt` method
-  // https://tc39.github.io/ecma262/#sec-string.prototype.codepointat
-  codeAt: createMethod(false),
-  // `String.prototype.at` method
-  // https://github.com/mathiasbynens/String.prototype.at
-  charAt: createMethod(true)
 };
 
 
@@ -1783,22 +1497,6 @@ module.exports = store.inspectSource;
 
 /***/ }),
 
-/***/ "8aa5":
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var charAt = __webpack_require__("6547").charAt;
-
-// `AdvanceStringIndex` abstract operation
-// https://tc39.github.io/ecma262/#sec-advancestringindex
-module.exports = function (S, index, unicode) {
-  return index + (unicode ? charAt(S, index).length : 1);
-};
-
-
-/***/ }),
-
 /***/ "8bbf":
 /***/ (function(module, exports) {
 
@@ -1832,101 +1530,6 @@ module.exports = DESCRIPTORS ? function (object, key, value) {
   object[key] = value;
   return object;
 };
-
-
-/***/ }),
-
-/***/ "9263":
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var regexpFlags = __webpack_require__("ad6d");
-var stickyHelpers = __webpack_require__("9f7f");
-
-var nativeExec = RegExp.prototype.exec;
-// This always refers to the native implementation, because the
-// String#replace polyfill uses ./fix-regexp-well-known-symbol-logic.js,
-// which loads this file before patching the method.
-var nativeReplace = String.prototype.replace;
-
-var patchedExec = nativeExec;
-
-var UPDATES_LAST_INDEX_WRONG = (function () {
-  var re1 = /a/;
-  var re2 = /b*/g;
-  nativeExec.call(re1, 'a');
-  nativeExec.call(re2, 'a');
-  return re1.lastIndex !== 0 || re2.lastIndex !== 0;
-})();
-
-var UNSUPPORTED_Y = stickyHelpers.UNSUPPORTED_Y || stickyHelpers.BROKEN_CARET;
-
-// nonparticipating capturing group, copied from es5-shim's String#split patch.
-var NPCG_INCLUDED = /()??/.exec('')[1] !== undefined;
-
-var PATCH = UPDATES_LAST_INDEX_WRONG || NPCG_INCLUDED || UNSUPPORTED_Y;
-
-if (PATCH) {
-  patchedExec = function exec(str) {
-    var re = this;
-    var lastIndex, reCopy, match, i;
-    var sticky = UNSUPPORTED_Y && re.sticky;
-    var flags = regexpFlags.call(re);
-    var source = re.source;
-    var charsAdded = 0;
-    var strCopy = str;
-
-    if (sticky) {
-      flags = flags.replace('y', '');
-      if (flags.indexOf('g') === -1) {
-        flags += 'g';
-      }
-
-      strCopy = String(str).slice(re.lastIndex);
-      // Support anchored sticky behavior.
-      if (re.lastIndex > 0 && (!re.multiline || re.multiline && str[re.lastIndex - 1] !== '\n')) {
-        source = '(?: ' + source + ')';
-        strCopy = ' ' + strCopy;
-        charsAdded++;
-      }
-      // ^(? + rx + ) is needed, in combination with some str slicing, to
-      // simulate the 'y' flag.
-      reCopy = new RegExp('^(?:' + source + ')', flags);
-    }
-
-    if (NPCG_INCLUDED) {
-      reCopy = new RegExp('^' + source + '$(?!\\s)', flags);
-    }
-    if (UPDATES_LAST_INDEX_WRONG) lastIndex = re.lastIndex;
-
-    match = nativeExec.call(sticky ? reCopy : re, strCopy);
-
-    if (sticky) {
-      if (match) {
-        match.input = match.input.slice(charsAdded);
-        match[0] = match[0].slice(charsAdded);
-        match.index = re.lastIndex;
-        re.lastIndex += match[0].length;
-      } else re.lastIndex = 0;
-    } else if (UPDATES_LAST_INDEX_WRONG && match) {
-      re.lastIndex = re.global ? match.index + match[0].length : lastIndex;
-    }
-    if (NPCG_INCLUDED && match && match.length > 1) {
-      // Fix browsers whose `exec` methods don't consistently return `undefined`
-      // for NPCG, like IE8. NOTE: This doesn' work for /(.?)?/
-      nativeReplace.call(match[0], reCopy, function () {
-        for (i = 1; i < arguments.length - 2; i++) {
-          if (arguments[i] === undefined) match[i] = undefined;
-        }
-      });
-    }
-
-    return match;
-  };
-}
-
-module.exports = patchedExec;
 
 
 /***/ }),
@@ -1986,37 +1589,6 @@ exports.f = DESCRIPTORS ? nativeDefineProperty : function defineProperty(O, P, A
 
 /***/ }),
 
-/***/ "9f7f":
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var fails = __webpack_require__("d039");
-
-// babel-minify transpiles RegExp('a', 'y') -> /a/y and it causes SyntaxError,
-// so we use an intermediate function.
-function RE(s, f) {
-  return RegExp(s, f);
-}
-
-exports.UNSUPPORTED_Y = fails(function () {
-  // babel-minify transpiles RegExp('a', 'y') -> /a/y and it causes SyntaxError
-  var re = RE('a', 'y');
-  re.lastIndex = 2;
-  return re.exec('abcd') != null;
-});
-
-exports.BROKEN_CARET = fails(function () {
-  // https://bugzilla.mozilla.org/show_bug.cgi?id=773687
-  var re = RE('^r', 'gy');
-  re.lastIndex = 2;
-  return re.exec('str') != null;
-});
-
-
-/***/ }),
-
 /***/ "a640":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2045,45 +1617,6 @@ var floor = Math.floor;
 // https://tc39.github.io/ecma262/#sec-tointeger
 module.exports = function (argument) {
   return isNaN(argument = +argument) ? 0 : (argument > 0 ? floor : ceil)(argument);
-};
-
-
-/***/ }),
-
-/***/ "ac1f":
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var $ = __webpack_require__("23e7");
-var exec = __webpack_require__("9263");
-
-$({ target: 'RegExp', proto: true, forced: /./.exec !== exec }, {
-  exec: exec
-});
-
-
-/***/ }),
-
-/***/ "ad6d":
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var anObject = __webpack_require__("825a");
-
-// `RegExp.prototype.flags` getter implementation
-// https://tc39.github.io/ecma262/#sec-get-regexp.prototype.flags
-module.exports = function () {
-  var that = anObject(this);
-  var result = '';
-  if (that.global) result += 'g';
-  if (that.ignoreCase) result += 'i';
-  if (that.multiline) result += 'm';
-  if (that.dotAll) result += 's';
-  if (that.unicode) result += 'u';
-  if (that.sticky) result += 'y';
-  return result;
 };
 
 
@@ -2119,164 +1652,6 @@ module.exports = function (METHOD_NAME, options) {
     method.call(O, argument0, argument1);
   });
 };
-
-
-/***/ }),
-
-/***/ "b622":
-/***/ (function(module, exports, __webpack_require__) {
-
-var global = __webpack_require__("da84");
-var shared = __webpack_require__("5692");
-var has = __webpack_require__("5135");
-var uid = __webpack_require__("90e3");
-var NATIVE_SYMBOL = __webpack_require__("4930");
-var USE_SYMBOL_AS_UID = __webpack_require__("fdbf");
-
-var WellKnownSymbolsStore = shared('wks');
-var Symbol = global.Symbol;
-var createWellKnownSymbol = USE_SYMBOL_AS_UID ? Symbol : Symbol && Symbol.withoutSetter || uid;
-
-module.exports = function (name) {
-  if (!has(WellKnownSymbolsStore, name)) {
-    if (NATIVE_SYMBOL && has(Symbol, name)) WellKnownSymbolsStore[name] = Symbol[name];
-    else WellKnownSymbolsStore[name] = createWellKnownSymbol('Symbol.' + name);
-  } return WellKnownSymbolsStore[name];
-};
-
-
-/***/ }),
-
-/***/ "b680":
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var $ = __webpack_require__("23e7");
-var toInteger = __webpack_require__("a691");
-var thisNumberValue = __webpack_require__("408a");
-var repeat = __webpack_require__("1148");
-var fails = __webpack_require__("d039");
-
-var nativeToFixed = 1.0.toFixed;
-var floor = Math.floor;
-
-var pow = function (x, n, acc) {
-  return n === 0 ? acc : n % 2 === 1 ? pow(x, n - 1, acc * x) : pow(x * x, n / 2, acc);
-};
-
-var log = function (x) {
-  var n = 0;
-  var x2 = x;
-  while (x2 >= 4096) {
-    n += 12;
-    x2 /= 4096;
-  }
-  while (x2 >= 2) {
-    n += 1;
-    x2 /= 2;
-  } return n;
-};
-
-var FORCED = nativeToFixed && (
-  0.00008.toFixed(3) !== '0.000' ||
-  0.9.toFixed(0) !== '1' ||
-  1.255.toFixed(2) !== '1.25' ||
-  1000000000000000128.0.toFixed(0) !== '1000000000000000128'
-) || !fails(function () {
-  // V8 ~ Android 4.3-
-  nativeToFixed.call({});
-});
-
-// `Number.prototype.toFixed` method
-// https://tc39.github.io/ecma262/#sec-number.prototype.tofixed
-$({ target: 'Number', proto: true, forced: FORCED }, {
-  // eslint-disable-next-line max-statements
-  toFixed: function toFixed(fractionDigits) {
-    var number = thisNumberValue(this);
-    var fractDigits = toInteger(fractionDigits);
-    var data = [0, 0, 0, 0, 0, 0];
-    var sign = '';
-    var result = '0';
-    var e, z, j, k;
-
-    var multiply = function (n, c) {
-      var index = -1;
-      var c2 = c;
-      while (++index < 6) {
-        c2 += n * data[index];
-        data[index] = c2 % 1e7;
-        c2 = floor(c2 / 1e7);
-      }
-    };
-
-    var divide = function (n) {
-      var index = 6;
-      var c = 0;
-      while (--index >= 0) {
-        c += data[index];
-        data[index] = floor(c / n);
-        c = (c % n) * 1e7;
-      }
-    };
-
-    var dataToString = function () {
-      var index = 6;
-      var s = '';
-      while (--index >= 0) {
-        if (s !== '' || index === 0 || data[index] !== 0) {
-          var t = String(data[index]);
-          s = s === '' ? t : s + repeat.call('0', 7 - t.length) + t;
-        }
-      } return s;
-    };
-
-    if (fractDigits < 0 || fractDigits > 20) throw RangeError('Incorrect fraction digits');
-    // eslint-disable-next-line no-self-compare
-    if (number != number) return 'NaN';
-    if (number <= -1e21 || number >= 1e21) return String(number);
-    if (number < 0) {
-      sign = '-';
-      number = -number;
-    }
-    if (number > 1e-21) {
-      e = log(number * pow(2, 69, 1)) - 69;
-      z = e < 0 ? number * pow(2, -e, 1) : number / pow(2, e, 1);
-      z *= 0x10000000000000;
-      e = 52 - e;
-      if (e > 0) {
-        multiply(0, z);
-        j = fractDigits;
-        while (j >= 7) {
-          multiply(1e7, 0);
-          j -= 7;
-        }
-        multiply(pow(10, j, 1), 0);
-        j = e - 1;
-        while (j >= 23) {
-          divide(1 << 23);
-          j -= 23;
-        }
-        divide(1 << j);
-        multiply(1, 1);
-        divide(2);
-        result = dataToString();
-      } else {
-        multiply(0, z);
-        multiply(1 << -e, 0);
-        result = dataToString() + repeat.call('0', fractDigits);
-      }
-    }
-    if (fractDigits > 0) {
-      k = result.length;
-      result = sign + (k <= fractDigits
-        ? '0.' + repeat.call('0', fractDigits - k) + result
-        : result.slice(0, k - fractDigits) + '.' + result.slice(k - fractDigits));
-    } else {
-      result = sign + result;
-    } return result;
-  }
-});
 
 
 /***/ }),
@@ -2546,139 +1921,6 @@ module.exports = {
 
 /***/ }),
 
-/***/ "d784":
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-// TODO: Remove from `core-js@4` since it's moved to entry points
-__webpack_require__("ac1f");
-var redefine = __webpack_require__("6eeb");
-var fails = __webpack_require__("d039");
-var wellKnownSymbol = __webpack_require__("b622");
-var regexpExec = __webpack_require__("9263");
-var createNonEnumerableProperty = __webpack_require__("9112");
-
-var SPECIES = wellKnownSymbol('species');
-
-var REPLACE_SUPPORTS_NAMED_GROUPS = !fails(function () {
-  // #replace needs built-in support for named groups.
-  // #match works fine because it just return the exec results, even if it has
-  // a "grops" property.
-  var re = /./;
-  re.exec = function () {
-    var result = [];
-    result.groups = { a: '7' };
-    return result;
-  };
-  return ''.replace(re, '$<a>') !== '7';
-});
-
-// IE <= 11 replaces $0 with the whole match, as if it was $&
-// https://stackoverflow.com/questions/6024666/getting-ie-to-replace-a-regex-with-the-literal-string-0
-var REPLACE_KEEPS_$0 = (function () {
-  return 'a'.replace(/./, '$0') === '$0';
-})();
-
-var REPLACE = wellKnownSymbol('replace');
-// Safari <= 13.0.3(?) substitutes nth capture where n>m with an empty string
-var REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE = (function () {
-  if (/./[REPLACE]) {
-    return /./[REPLACE]('a', '$0') === '';
-  }
-  return false;
-})();
-
-// Chrome 51 has a buggy "split" implementation when RegExp#exec !== nativeExec
-// Weex JS has frozen built-in prototypes, so use try / catch wrapper
-var SPLIT_WORKS_WITH_OVERWRITTEN_EXEC = !fails(function () {
-  var re = /(?:)/;
-  var originalExec = re.exec;
-  re.exec = function () { return originalExec.apply(this, arguments); };
-  var result = 'ab'.split(re);
-  return result.length !== 2 || result[0] !== 'a' || result[1] !== 'b';
-});
-
-module.exports = function (KEY, length, exec, sham) {
-  var SYMBOL = wellKnownSymbol(KEY);
-
-  var DELEGATES_TO_SYMBOL = !fails(function () {
-    // String methods call symbol-named RegEp methods
-    var O = {};
-    O[SYMBOL] = function () { return 7; };
-    return ''[KEY](O) != 7;
-  });
-
-  var DELEGATES_TO_EXEC = DELEGATES_TO_SYMBOL && !fails(function () {
-    // Symbol-named RegExp methods call .exec
-    var execCalled = false;
-    var re = /a/;
-
-    if (KEY === 'split') {
-      // We can't use real regex here since it causes deoptimization
-      // and serious performance degradation in V8
-      // https://github.com/zloirock/core-js/issues/306
-      re = {};
-      // RegExp[@@split] doesn't call the regex's exec method, but first creates
-      // a new one. We need to return the patched regex when creating the new one.
-      re.constructor = {};
-      re.constructor[SPECIES] = function () { return re; };
-      re.flags = '';
-      re[SYMBOL] = /./[SYMBOL];
-    }
-
-    re.exec = function () { execCalled = true; return null; };
-
-    re[SYMBOL]('');
-    return !execCalled;
-  });
-
-  if (
-    !DELEGATES_TO_SYMBOL ||
-    !DELEGATES_TO_EXEC ||
-    (KEY === 'replace' && !(
-      REPLACE_SUPPORTS_NAMED_GROUPS &&
-      REPLACE_KEEPS_$0 &&
-      !REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE
-    )) ||
-    (KEY === 'split' && !SPLIT_WORKS_WITH_OVERWRITTEN_EXEC)
-  ) {
-    var nativeRegExpMethod = /./[SYMBOL];
-    var methods = exec(SYMBOL, ''[KEY], function (nativeMethod, regexp, str, arg2, forceStringMethod) {
-      if (regexp.exec === regexpExec) {
-        if (DELEGATES_TO_SYMBOL && !forceStringMethod) {
-          // The native String method already delegates to @@method (this
-          // polyfilled function), leasing to infinite recursion.
-          // We avoid it by directly calling the native @@method method.
-          return { done: true, value: nativeRegExpMethod.call(regexp, str, arg2) };
-        }
-        return { done: true, value: nativeMethod.call(str, regexp, arg2) };
-      }
-      return { done: false };
-    }, {
-      REPLACE_KEEPS_$0: REPLACE_KEEPS_$0,
-      REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE: REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE
-    });
-    var stringMethod = methods[0];
-    var regexMethod = methods[1];
-
-    redefine(String.prototype, KEY, stringMethod);
-    redefine(RegExp.prototype, SYMBOL, length == 2
-      // 21.2.5.8 RegExp.prototype[@@replace](string, replaceValue)
-      // 21.2.5.11 RegExp.prototype[@@split](string, limit)
-      ? function (string, arg) { return regexMethod.call(string, this, arg); }
-      // 21.2.5.6 RegExp.prototype[@@match](string)
-      // 21.2.5.9 RegExp.prototype[@@search](string)
-      : function (string) { return regexMethod.call(string, this); }
-    );
-  }
-
-  if (sham) createNonEnumerableProperty(RegExp.prototype[SYMBOL], 'sham', true);
-};
-
-
-/***/ }),
-
 /***/ "da84":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2789,20 +2031,6 @@ var requireObjectCoercible = __webpack_require__("1d80");
 module.exports = function (it) {
   return IndexedObject(requireObjectCoercible(it));
 };
-
-
-/***/ }),
-
-/***/ "fdbf":
-/***/ (function(module, exports, __webpack_require__) {
-
-var NATIVE_SYMBOL = __webpack_require__("4930");
-
-module.exports = NATIVE_SYMBOL
-  // eslint-disable-next-line no-undef
-  && !Symbol.sham
-  // eslint-disable-next-line no-undef
-  && typeof Symbol.iterator == 'symbol';
 
 
 /***/ })
