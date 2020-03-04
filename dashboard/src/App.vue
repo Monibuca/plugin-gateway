@@ -48,53 +48,64 @@
     vertical-align: middle;
     font-size: 22px;
 }
+.plugin-container{
+    display:flex;flex-wrap:wrap;
+}
+.plugin-container>*{
+    margin: 10px;
+}
+pre{
+    margin: 0;
+}
 </style>
 <template>
-    <div class="layout" id="app">
+    <Layout class="layout">
+        <Sider ref="side1" hide-trigger collapsible :collapsed-width="78" v-model="isCollapsed">
+            <Menu theme="dark" width="auto" :class="menuitemClasses" @on-select="selectPlugin">
+                <MenuItem name="#">
+                    <span>插件列表</span>
+                </MenuItem>
+                <MenuItem
+                    :name="item.Name"
+                    v-for="item in plugins.filter(x=>x.UI)"
+                    :key="item.Name"
+                >
+                    <span>{{item.Name}}</span>
+                </MenuItem>
+            </Menu>
+        </Sider>
         <Layout>
-            <Sider ref="side1" hide-trigger collapsible :collapsed-width="78" v-model="isCollapsed">
-                <Menu theme="dark" width="auto" :class="menuitemClasses" @on-select="selectPlugin">
-                    <MenuItem name="#">
-                        <span>插件列表</span>
-                    </MenuItem>
-                    <MenuItem :name="item.Name" v-for="item in plugins.filter(x=>x.UI)" :key="item.Name">
-                        <span>{{item.Name}}</span>
-                    </MenuItem>
-                </Menu>
-            </Sider>
-            <Layout>
-                <Header :style="{padding: 0}" class="layout-header-bar">
-                    <Icon
-                        @click.native="collapsedSider"
-                        :class="rotateIcon"
-                        :style="{margin: '0 20px'}"
-                        type="md-menu"
-                        size="24"
-                    ></Icon>
-                    Monibuca 控制台 引擎版本： v{{engineInfo.Version}} 启动时间：{{engineInfo.StartTime}}
-                </Header>
-                <Content :style="{margin: '20px', background: '#fff', minHeight: '260px'}">
-                    <List header="已启用的插件：" v-if="currentPlugin=='#'" border>
-                        <ListItem v-for="item in plugins" :key="item.Name">
-                            <ListItemMeta :title="item.Name" :description="item.Version"></ListItemMeta>
-                            <pre>{{item.Config}}</pre>
-                        </ListItem>
-                    </List>
-                    <component :is="'plugin-'+currentPlugin" v-else v-bind="currentConfig"/>
-                </Content>
-            </Layout>
+            <Header :style="{padding: 0}" class="layout-header-bar">
+                <Icon
+                    @click.native="collapsedSider"
+                    :class="rotateIcon"
+                    :style="{margin: '0 20px'}"
+                    type="md-menu"
+                    size="24"
+                ></Icon>
+                Monibuca 控制台 引擎版本： v{{engineInfo.Version}} 启动时间：{{engineInfo.StartTime}}
+            </Header>
+            <Content :style="{margin: '20px', background: '#fff', minHeight: '260px'}">
+                <div v-if="currentPlugin=='#'" class="plugin-container">
+                    <Card border v-for="item in plugins" :key="item.Name" :title="(item.UI?'📈':'🧩')+item.Name">
+                        <div slot="extra">{{item.Version}}</div>
+                        <pre>{{item.Config}}</pre>
+                    </Card>
+                </div>
+                <component :is="'plugin-'+currentPlugin" v-else v-bind="currentConfig" />
+            </Content>
         </Layout>
-    </div>
+    </Layout>
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
-import toml from "@iarna/toml"
+import toml from "@iarna/toml";
 export default {
     data() {
         return {
             isCollapsed: false,
             currentPlugin: "#",
-            currentConfig:{}
+            currentConfig: {}
         };
     },
     computed: {
@@ -107,7 +118,7 @@ export default {
         },
         menuitemClasses() {
             return ["menu-item", this.isCollapsed ? "collapsed-menu" : ""];
-        },
+        }
     },
     mounted() {
         this.fetchEngineInfo();
@@ -117,16 +128,16 @@ export default {
         ...mapActions(["fetchEngineInfo", "fetchPlugins"]),
         selectPlugin(name) {
             this.currentPlugin = name.toLowerCase();
-            for(let i=0;i<this.plugins.length;i++){
-                if(this.plugins[i].Name == name){
-                    this.currentConfig=  toml.parse(this.plugins[i].Config)
-                    break
+            for (let i = 0; i < this.plugins.length; i++) {
+                if (this.plugins[i].Name == name) {
+                    this.currentConfig = toml.parse(this.plugins[i].Config);
+                    break;
                 }
             }
         },
         collapsedSider() {
             this.$refs.side1.toggleCollapse();
-        },
+        }
     }
 };
 </script>
