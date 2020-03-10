@@ -30,7 +30,7 @@ func init() {
 		Type:    PLUGIN_HOOK,
 		Config:  config,
 		UI:      path.Join(path.Dir(currentFilePath), "./dashboard/ui/plugin-gateway.min.js"),
-		Version: "1.0.0",
+		Version: "1.1.0",
 		Run:     run,
 	})
 }
