@@ -48,13 +48,14 @@
     vertical-align: middle;
     font-size: 22px;
 }
-.plugin-container{
-    display:flex;flex-wrap:wrap;
+.plugin-container {
+    display: flex;
+    flex-wrap: wrap;
 }
-.plugin-container>*{
+.plugin-container > * {
     margin: 10px;
 }
-pre{
+pre {
     margin: 0;
 }
 </style>
@@ -87,12 +88,22 @@ pre{
             </Header>
             <Content :style="{margin: '20px', background: '#fff', minHeight: '260px'}">
                 <div v-if="currentPlugin=='#'" class="plugin-container">
-                    <Card border v-for="item in plugins" :key="item.Name" :title="(item.UI?'📈':'🧩')+item.Name">
+                    <Card
+                        border
+                        v-for="item in plugins"
+                        :key="item.Name"
+                        :title="(item.UI?'📈':'🧩')+item.Name"
+                    >
                         <div slot="extra">{{item.Version}}</div>
                         <pre>{{item.Config}}</pre>
                     </Card>
                 </div>
-                <component :is="'plugin-'+currentPlugin" v-else v-bind="currentConfig" />
+                <component
+                    ref="plugin"
+                    :is="'plugin-'+currentPlugin"
+                    v-else
+                    v-bind="currentConfig"
+                />
             </Content>
         </Layout>
     </Layout>
@@ -100,6 +111,14 @@ pre{
 <script>
 import { mapActions, mapState } from "vuex";
 import toml from "@iarna/toml";
+const appStyle = new CSSStyleSheet();
+const appCSSs = document.styleSheets;
+for (var i = 0; i < appCSSs.length; i++) {
+    for (var j = 0; j < appCSSs[i].cssRules.length; j++) {
+        appStyle.insertRule(appCSSs[i].cssRules[j].cssText);
+    }
+}
+window.appStyle = appStyle;
 export default {
     data() {
         return {
@@ -134,6 +153,11 @@ export default {
                     break;
                 }
             }
+            this.$nextTick(() => {
+                this.$refs.plugin.shadowRoot.adoptedStyleSheets = [
+                    window.appStyle
+                ];
+            });
         },
         collapsedSider() {
             this.$refs.side1.toggleCollapse();
