@@ -131,7 +131,6 @@ export default {
 </script>
 
 <style lang="less">
-@import url("/iview.css");
 .demo-Circle-custom {
     & h1 {
         color: #3f414d;
