@@ -153,6 +153,7 @@ export default {
                     break;
                 }
             }
+            if(name!="#")
             this.$nextTick(() => {
                 this.$refs.plugin.shadowRoot.adoptedStyleSheets = [
                     window.appStyle
