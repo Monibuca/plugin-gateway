@@ -12,17 +12,17 @@
                 启动时间：{{engineInfo.StartTime}}
             </div>
         </mu-appbar>
-        <mu-drawer open width="200" :z-depth="0">
+        <mu-drawer open width="200">
             <mu-appbar :z-depth="0">
-                <div style="line-height:24px">Monibuca </div>
-                <div style="font-size:10px;line-height:24px">{{'engine: v'+engineInfo.Version}}</div>
+                <div style="line-height:24px"><img src="favicon.ico" width="24" style="    vertical-align: top;">onibuca </div>
+                <div style="font-size:10px;line-height:24px">engine: {{engineInfo.Version}}</div>
             </mu-appbar>
             <mu-divider></mu-divider>
             <mu-list :value="currentPluginData.Name" @change="selectPlugin">
                 <mu-list-item :value="item.Name" button v-for="item in plugins" :key="item.Name">
                     <mu-list-item-title>{{(item.UI?'📈':'🧩')+item.Name}}</mu-list-item-title>
                     <mu-list-item-action>
-                        <mu-badge :content="item.Version" />
+                        <mu-badge :content="item.Version.split('-')[0]" />
                     </mu-list-item-action>
                 </mu-list-item>
             </mu-list>
@@ -32,7 +32,7 @@
             <component v-else ref="plugin" :is="currentPlugin" v-bind="currentConfig" />
         </mu-container>
         <mu-dialog width="360" transition="slide-bottom" fullscreen :open.sync="openFullscreen">
-            <mu-appbar color="primary" :title="currentPluginData.Name">
+            <mu-appbar color="#009688AF" :title="currentPluginData.Name">
                 <mu-button slot="left" icon @click="closeFullscreenDialog">
                     <mu-icon value="close"></mu-icon>
                 </mu-button>
@@ -40,7 +40,7 @@
                     Done
                 </mu-button>
             </mu-appbar>
-            <vue-markdown style="padding: 24px;" :source="currentPluginData.ReadMe" />
+            <vue-markdown class="readme" :source="currentPluginData.ReadMe" />
         </mu-dialog>
         <mu-dialog width="360" transition="slide-bottom" :open.sync="openSettings">
             <pre>{{currentPluginData.Config}}</pre>
@@ -143,5 +143,14 @@ export default {
     white-space: nowrap;
     word-wrap: normal;
     direction: ltr;
+}
+.readme{
+    padding: 24px;
+    overflow: auto;
+    position: absolute;
+    top: 64px;
+    bottom: 0;
+    left: 0;
+    right: 0;
 }
 </style>

@@ -26,7 +26,13 @@
             <p>CPU使用率</p>
             <span style="font-size:24px">{{CPUUsage.toFixed(2)}}%</span>
         </i-circle>
-        <Table :columns="netWorkColumns" :data="NetWork"></Table>
+        <mu-data-table :columns="netWorkColumns" :data="NetWork">
+            <template slot-scope="scope">
+                <td>{{scope.row.Name}}</td>
+                <td>{{unitFormat(scope.row.ReceiveSpeed) + "/S"}}</td>
+                <td>{{unitFormat(scope.row.SentSpeed) + "/S"}}</td>
+            </template>
+        </mu-data-table>
     </div>
 </template>
 
@@ -53,25 +59,22 @@ export default {
             netWorkColumns: [
                 {
                     title: "接口",
-                    key: "Name"
+                    name: "Name"
                 },
                 {
                     title: "接收",
-                    render: (h, { row }) =>
-                        h("div", this.unitFormat(row.ReceiveSpeed) + "/S")
+                    name:"ReceiveSpeed"
                 },
                 {
                     title: "发送",
-                    render: (h, { row }) =>
-                        h("div", this.unitFormat(row.SentSpeed) + "/S")
+                    name:"SentSpeed"
                 }
             ]
         };
     },
     methods: {
-        unitFormat: window.unitFormat,
         fetchSummary() {
-            summaryES = new EventSource("//" + location.host + "/api/summary");
+            summaryES = new EventSource("/api/summary");
             summaryES.onmessage = evt => {
                 if (!evt.data) return;
                 let summary = JSON.parse(evt.data);

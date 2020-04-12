@@ -19,7 +19,7 @@
         },
         {
             "type": "npm",
-            "script": "home:build",
+            "script": "ui:build",
             "path": "dashboard/",
             "group": "build",
             "problemMatcher": []
