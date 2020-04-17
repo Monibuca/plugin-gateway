@@ -9,11 +9,13 @@ import (
 	"net/http"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
 	. "github.com/Monibuca/engine"
 	. "github.com/Monibuca/engine/util"
+	. "github.com/logrusorgru/aurora"
 )
 
 var (
@@ -38,8 +40,9 @@ func run() {
 	http.HandleFunc("/api/summary", summary)
 	http.HandleFunc("/api/config", getConfig)
 	http.HandleFunc("/api/plugins", getPlugins)
+	http.HandleFunc("/plugin/", getPluginUI)
 	http.HandleFunc("/", website)
-	log.Printf("server gateway start at %s", config.ListenAddr)
+	Print(Green("server gateway start at "), BrightBlue(config.ListenAddr))
 	log.Fatal(http.ListenAndServe(config.ListenAddr, nil))
 }
 
@@ -108,7 +111,7 @@ type PluginInfo struct {
 	Name    string //插件名称
 	Type    byte   //类型
 	Config  string //插件配置
-	UI      string //界面路径
+	UIDir   string //界面路径
 	ReadMe  string //README.md
 	Version string //插件版本
 }
@@ -118,14 +121,14 @@ func getPlugins(w http.ResponseWriter, r *http.Request) {
 	var plugins []*PluginInfo
 	for _, plugin := range Plugins {
 		p := &PluginInfo{
-			plugin.Name, plugin.Type, "", "", "", plugin.Version,
+			plugin.Name, plugin.Type, "", plugin.UIDir, "", plugin.Version,
 		}
-		if plugin.UI != "" {
+		// if plugin.UI != "" {
 
-			if bytes, err := ioutil.ReadFile(plugin.UI); err == nil {
-				p.UI = string(bytes)
-			}
-		}
+		// 	if bytes, err := ioutil.ReadFile(plugin.UI); err == nil {
+		// 		p.UI = string(bytes)
+		// 	}
+		// }
 		if bytes, err := ioutil.ReadFile(filepath.Join(plugin.Dir, "README.md")); err == nil {
 			p.ReadMe = string(bytes)
 		}
@@ -140,4 +143,23 @@ func getPlugins(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_, err = w.Write(bytes)
+}
+func getPluginUI(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	filePath := strings.TrimPrefix(r.URL.Path, "/plugin/")
+	pluginName := filePath[:strings.Index(filePath, "/")]
+	filePath = filePath[len(pluginName)+1:]
+	if plugin, ok := Plugins[pluginName]; ok {
+		filePath := filepath.Join(plugin.UIDir, filePath)
+		if mime := mime.TypeByExtension(path.Ext(filePath)); mime != "" {
+			w.Header().Set("Content-Type", mime)
+		}
+		if f, err := ioutil.ReadFile(filePath); err == nil {
+			if _, err = w.Write(f); err != nil {
+				w.WriteHeader(505)
+			}
+			return
+		}
+	}
+	w.WriteHeader(404)
 }

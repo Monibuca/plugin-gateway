@@ -1,12 +1,11 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 Vue.use(Vuex)
-const host = process.env.NODE_ENV == "development" ? location.hostname + ":8081" : location.host
+Vue.prototype.apiHost = "//" + (process.env.NODE_ENV == "development" ? location.hostname + ":8081" : location.host)
 export default new Vuex.Store({
   state: {
     plugins: [],
     engineInfo: {},
-    apiHost: host
   },
   mutations: {
     update(state, payload) {
@@ -15,16 +14,13 @@ export default new Vuex.Store({
   },
   actions: {
     fetchEngineInfo({ commit }) {
-      return window.ajax.getJSON("//" + host + "/api/sysInfo").then(engineInfo => commit("update", { engineInfo }))
+      return window.ajax.getJSON(Vue.prototype.apiHost + "/api/sysInfo").then(engineInfo => commit("update", { engineInfo }))
     },
     fetchPlugins({ commit }) {
-      return window.ajax.getJSON("//" + host + "/api/plugins").then(plugins => {
+      return window.ajax.getJSON(Vue.prototype.apiHost + "/api/plugins").then(plugins => {
+        plugins.sort((a, b) => a.Name > b.Name ? 1 : -1)
         commit("update", { plugins })
-        for (let i = 0; i < plugins.length; i++) {
-          let s = document.createElement('script')
-          s.innerHTML = plugins[i].UI
-          document.body.appendChild(s)
-        }
+        return plugins
       })
     }
   },

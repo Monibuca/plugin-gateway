@@ -8,29 +8,33 @@
             <mu-button icon color="primary" @click="showSettings">
                 <mu-icon value="settings"></mu-icon>
             </mu-button>
+            <mu-button v-for="item in menus" :key="item.label" color="primary" @click="item.action()">
+                {{item.label}}
+            </mu-button>
             <div slot="right">
                 启动时间：{{engineInfo.StartTime}}
             </div>
         </mu-appbar>
         <mu-drawer open width="200">
             <mu-appbar :z-depth="0">
-                <div style="line-height:24px"><img src="favicon.ico" width="24" style="    vertical-align: top;">onibuca </div>
+                <div style="line-height:24px"><img src="favicon.ico" width="24" style="    vertical-align: top;">onibuca
+                </div>
                 <div style="font-size:10px;line-height:24px">engine: {{engineInfo.Version}}</div>
             </mu-appbar>
             <mu-divider></mu-divider>
             <mu-list :value="currentPluginData.Name" @change="selectPlugin">
                 <mu-list-item :value="item.Name" button v-for="item in plugins" :key="item.Name">
-                    <mu-list-item-title>{{(item.UI?'📈':'🧩')+item.Name}}</mu-list-item-title>
+                    <mu-list-item-title>{{(item.UIDir?'📈':'🧩')+item.Name}}</mu-list-item-title>
                     <mu-list-item-action>
                         <mu-badge :content="item.Version.split('-')[0]" />
                     </mu-list-item-action>
                 </mu-list-item>
             </mu-list>
         </mu-drawer>
-        <mu-container style=" padding-left: 200px;padding-top:80px">
-            <vue-markdown style="padding: 24px;" :source="currentPluginData.ReadMe" v-if="!currentPluginData.UI" />
+        <div style="padding:100px 20px 20px 220px">
+            <vue-markdown style="padding: 24px;" :source="currentPluginData.ReadMe" v-if="!currentPluginData.UIDir" />
             <component v-else ref="plugin" :is="currentPlugin" v-bind="currentConfig" />
-        </mu-container>
+        </div>
         <mu-dialog width="360" transition="slide-bottom" fullscreen :open.sync="openFullscreen">
             <mu-appbar color="#009688AF" :title="currentPluginData.Name">
                 <mu-button slot="left" icon @click="closeFullscreenDialog">
@@ -49,17 +53,12 @@
 </template>
 
 <script>
+import Vue from "vue";
 import { mapActions, mapState } from "vuex";
 import VueMarkdown from "vue-markdown";
 import toml from "@iarna/toml";
-const appStyle = new CSSStyleSheet();
-const appCSSs = document.styleSheets;
-for (var i = 0; i < appCSSs.length; i++) {
-    for (var j = 0; j < appCSSs[i].cssRules.length; j++) {
-        appStyle.insertRule(appCSSs[i].cssRules[j].cssText);
-    }
-}
-window.appStyle = appStyle;
+// const appStyle = [];
+
 export default {
     components: {
         VueMarkdown
@@ -68,16 +67,18 @@ export default {
         return {
             openFullscreen: false,
             openSettings: false,
-            currentPluginData: {}
+            currentPluginData: {},
+            menus: []
         };
     },
+    watch: {},
     computed: {
         ...mapState({
             plugins: state => state.plugins,
             engineInfo: state => state.engineInfo
         }),
         currentPlugin() {
-            return "plugin-" + this.currentPluginData.Name;
+            return "plugin-" + this.currentPluginData.Name.toLowerCase();
         },
         currentConfig() {
             return toml.parse(this.currentPluginData.Config);
@@ -85,7 +86,44 @@ export default {
     },
     mounted() {
         this.fetchEngineInfo();
-        this.fetchPlugins().then(() => this.selectPlugin("GateWay"));
+        this.fetchPlugins().then(plugins => {
+            for (let i = 0; i < plugins.length; i++) {
+                if (plugins[i].UIDir) {
+                    const pluginName =
+                        "plugin-" + plugins[i].Name.toLowerCase();
+                    Vue.component(pluginName, (resolve, reject) => {
+                        let s = document.createElement("script");
+                        s.setAttribute(
+                            "src",
+                            this.apiHost +
+                                "/plugin/" +
+                                plugins[i].Name +
+                                "/" +
+                                pluginName +
+                                ".umd.min.js"
+                        );
+                        s.onload = function() {
+                            resolve(window[pluginName]);
+                        };
+                        s.onerror = reject;
+                        document.body.appendChild(s);
+                    });
+                    let linkTag = document.createElement("link");
+                    linkTag.href =
+                        this.apiHost +
+                        "/plugin/" +
+                        plugins[i].Name +
+                        "/" +
+                        pluginName +
+                        ".css";
+                    linkTag.setAttribute("rel", "stylesheet");
+                    linkTag.setAttribute("type", "text/css");
+                    document.head.appendChild(linkTag);
+                }
+            }
+
+            this.selectPlugin("GateWay");
+        });
     },
     methods: {
         ...mapActions(["fetchEngineInfo", "fetchPlugins"]),
@@ -94,11 +132,6 @@ export default {
         },
         selectPlugin(name) {
             this.currentPluginData = this.plugins.find(x => x.Name == name);
-            this.$nextTick(() => {
-                this.$refs.plugin.shadowRoot.adoptedStyleSheets = [
-                    window.appStyle
-                ];
-            });
         },
         getHelp() {
             this.openFullscreen = true;
@@ -110,7 +143,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .title {
     position: fixed;
     left: 200px;
@@ -144,7 +177,7 @@ export default {
     word-wrap: normal;
     direction: ltr;
 }
-.readme{
+.readme {
     padding: 24px;
     overflow: auto;
     position: absolute;

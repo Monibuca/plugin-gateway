@@ -1,8 +1,19 @@
 <meta charset="utf-8">
 <title>plugin-gateway demo</title>
 <script src="https://unpkg.com/vue"></script>
-<script src="./plugin-gateway.js"></script>
+<script src="./plugin-gateway.umd.js"></script>
+
+<link rel="stylesheet" href="./plugin-gateway.css">
 
 
-<plugin-gateway></plugin-gateway>
+<div id="app">
+  <demo></demo>
+</div>
 
+<script>
+new Vue({
+  components: {
+    demo: plugin-gateway
+  }
+}).$mount('#app')
+</script>

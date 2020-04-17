@@ -63,18 +63,18 @@ export default {
                 },
                 {
                     title: "接收",
-                    name:"ReceiveSpeed"
+                    name: "ReceiveSpeed"
                 },
                 {
                     title: "发送",
-                    name:"SentSpeed"
+                    name: "SentSpeed"
                 }
             ]
         };
     },
     methods: {
         fetchSummary() {
-            summaryES = new EventSource("/api/summary");
+            summaryES = new EventSource(this.apiHost + "/api/summary");
             summaryES.onmessage = evt => {
                 if (!evt.data) return;
                 let summary = JSON.parse(evt.data);
@@ -115,7 +115,7 @@ export default {
     mounted() {
         this.fetchSummary();
     },
-    deactivated() {
+    destroyed() {
         summaryES.close();
     }
 };
@@ -124,13 +124,13 @@ export default {
 <style lang="less">
 .demo-Circle-custom {
     & h1 {
-        color: #3f414d;
+        color: #ffc107;
         font-size: 28px;
         font-weight: normal;
     }
 
     & p {
-        color: #657180;
+        color: #cddc39;
         font-size: 14px;
         margin: 10px 0 15px;
     }
@@ -138,7 +138,7 @@ export default {
     & span {
         display: block;
         padding-top: 15px;
-        color: #657180;
+        color: #cddc39;
         font-size: 14px;
 
         & :before {
@@ -154,7 +154,7 @@ export default {
     }
     & span i {
         font-style: normal;
-        color: #3f414d;
+        color: #ffc107;
     }
 }
 </style>
