@@ -1,7 +1,7 @@
 <template>
     <div>
         <i-circle dashboard :size="250" :trail-width="4" :stroke-width="5" :percent="Memory.Usage"
-            :stroke-color="['#FF0000','#00FF00']">
+            :stroke-color="['#c52dd0','#40d3fc']" trail-color="#000000">
             <div class="demo-Circle-custom">
                 <h1>{{unitFormat(Memory.Used,"M")}}</h1>
                 <p>内存使用</p>
@@ -12,7 +12,7 @@
             </div>
         </i-circle>
         <i-circle dashboard :size="250" :trail-width="4" :stroke-width="5" :percent="HardDisk.Usage"
-            :stroke-color="['#FF0000','#00FF00']">
+            :stroke-color="['#c52dd0','#40d3fc']" trail-color="#000000">
             <div class="demo-Circle-custom">
                 <h1>{{unitFormat(HardDisk.Used,"M")}}</h1>
                 <p>硬盘使用</p>
@@ -22,7 +22,7 @@
                 </span>
             </div>
         </i-circle>
-        <i-circle :percent="CPUUsage" dashboard :stroke-color="['#FF0000','#00FF00']">
+        <i-circle :percent="CPUUsage" dashboard  trail-color="#000000" :stroke-color="['#c52dd0','#40d3fc']">
             <p>CPU使用率</p>
             <span style="font-size:24px">{{CPUUsage.toFixed(2)}}%</span>
         </i-circle>
@@ -124,13 +124,13 @@ export default {
 <style lang="less">
 .demo-Circle-custom {
     & h1 {
-        color: #ffc107;
+        color: #feeb73;
         font-size: 28px;
         font-weight: normal;
     }
 
     & p {
-        color: #cddc39;
+        color: #d11b58;
         font-size: 14px;
         margin: 10px 0 15px;
     }
@@ -138,7 +138,7 @@ export default {
     & span {
         display: block;
         padding-top: 15px;
-        color: #cddc39;
+        color: #d11b58;
         font-size: 14px;
 
         & :before {
@@ -154,7 +154,7 @@ export default {
     }
     & span i {
         font-style: normal;
-        color: #ffc107;
+        color: #feeb73;
     }
 }
 </style>

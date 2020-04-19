@@ -22,9 +22,10 @@ Vue.use(Message);
 Vue.use(Toast);
 
 Vue.use(MuseUI);
-
-theme.add('custom-theme', {
-    primary: colors.teal,
+//0 蓝，1 红，2 紫，3 洋红,4 青 ，5 黄
+const Cyberpunk = ["#153ad0","#d11b58","#4a1798","#c52dd0","#40d3fc","#feeb73"]
+theme.add('Cyberpunk', {
+    primary: Cyberpunk[4],
     secondary: colors.amber,
     text: {
         primary: colors.grey200,
@@ -36,106 +37,162 @@ theme.add('custom-theme', {
 }, 'dark');
 theme.addCreateTheme(() => {
     return `
+    html {
+        height:100%
+    }
+    body {
+        background-image: radial-gradient(${Cyberpunk[3]}7a,${Cyberpunk[2]}7a, #0300137a);
+        color: #ffffff;
+        background-color: black;
+        height:100%;
+    }
     .mu-item {
-        color : ${colors.teal}
+        color :${Cyberpunk[4]};
+        text-shadow: 0px 2px 2px ${Cyberpunk[3]};
     }
     .mu-item:hover {
-        color : ${colors.tealA200}
+        color : #ffb4f6;
+        background:#000;
     }
     .mu-item.is-selected>.mu-item-title{
-        color:  ${colors.tealA200};
-        text-shadow: 0px 0px 3px ${colors.cyanA200};
+        color: #ffb4f6;
+        text-shadow: 0px 0px 1px ${Cyberpunk[2]}, 0px 0px 4px ${Cyberpunk[3]}, 0px 0px 5px #ffffff;
     }
     .mu-badge {
-        color : ${colors.amber};
-        background : #ffffff0f;
+        color : ${Cyberpunk[4]};
+        background : ${Cyberpunk[2]};
     }
     .mu-paper {
-        background: #ffffff09;
+        background: #0000000f;
     }
     .mu-appbar{
-        background: #00695cAF;
-        color :${colors.grey200};
+        background: #000;
+        color : #000;
+        text-shadow: 
+        1px 1px ${Cyberpunk[4]},
+        -1px -1px ${Cyberpunk[4]},
+        1px -1px ${Cyberpunk[4]},
+        -1px 1px ${Cyberpunk[4]};
+    }
+    .mu-appbar .mu-button{
+        color :${Cyberpunk[4]}
     }
     .mu-dialog{
-        background: #222222Af;
-        box-shadow: 0 5px 5px -3px rgba(1, 220, 255, 0.48), 0 8px 10px 1px #00BCD4, 0 3px 14px 2px #03A9F4;
-        border-radius: 5px;
+        background: #0000009e url(dbg.jpg);
+        background-blend-mode: darken;
+        box-shadow: 
+        inset 0px -2px 5px 0px ${Cyberpunk[3]}, 
+        inset 0px -7px 10px 1px ${Cyberpunk[0]},
+        inset 0 3px 14px 2px ${Cyberpunk[2]},
+        0 2px 2px 2px black;
+        border: 1px solid ${Cyberpunk[4]};
+        position:relative;
+    }
+    .mu-dialog:before{
+        content: "";
+        position: absolute;
+        width: 50px;
+        height: 0;
+        border: 10px solid ${Cyberpunk[4]};
+        top: -10px;
+        left: -1px;
+        border-right: 10px solid transparent;
+        border-top: 0;
+    }
+    .mu-dialog:after{
+        content: "";
+        position: absolute;
+        width: 50px;
+        height: 0;
+        border: 10px solid ${Cyberpunk[4]};
+        border-left: 10px solid transparent;
+        border-bottom: 0;
+        right: -1px;
     }
     .mu-dialog-title {
-        color : ${colors.teal};
+        font-weight: lighter;
+        color : ${colors.grey300};
+        text-shadow: 
+        1px 1px 2px ${Cyberpunk[4]},
+        -1px -1px 2px ${Cyberpunk[4]},
+        1px -1px 2px ${Cyberpunk[4]},
+        -1px 1px 2px ${Cyberpunk[4]};
     }
     .mu-dialog-body {
         color : ${colors.grey200};
     }
     .mu-button {
-        color:  ${colors.teal};
+        color:  ${Cyberpunk[4]};
     }
     .mu-button :hover{
-        color:  ${colors.tealA200};
+        color:  white;
         text-shadow: 0px 0px 3px ${colors.cyanA200};
     }
     .mu-table {
-        background: #9e9e9e5d;
-        box-shadow: 0 0 5px #000;
+        background: #00000047;
+        box-shadow: 0 0 5px ${Cyberpunk[4]},inset 0 0 5px ${Cyberpunk[4]},0 0 0 1px ${Cyberpunk[4]};
         border-radius: 5px;
     }
-    .mu-table {
-        background: #9e9e9e5d;
-        box-shadow: 0 0 5px #000;
-        border-radius: 5px;
+    .mu-table-empty {
+        color : white;
     }
-    
     .mu-table th {
-        color: ${colors.amber};
+        color: ${Cyberpunk[1]};
+        text-shadow: 0px 0px 2px ${Cyberpunk[1]};
     }
     .mu-table tr {
-        color: #eeeeee;
+        color: ${Cyberpunk[4]};
     }
     .mu-table tr.is-hover {
         background: #000;
-        color: ${colors.cyanA200};
-        text-shadow: 0px 0px 3px ${colors.cyanA200};
+        color: white;
+        text-shadow: 0px 0px 3px ${Cyberpunk[4]};
     }
     .mu-flat-button {
-        color: #009688;
+        color: ${Cyberpunk[4]};
     }
     .mu-card {
         background: #9e9e9e1d;
         border: 1px solid #ffffffa8;
     }
     .mu-card-title-container .mu-card-title {
-        color: #ffc107;
+        color: ${Cyberpunk[5]};
+    }
+    .mu-card-title-container .mu-card-sub-title {
+        color: ${Cyberpunk[3]};
     }
     .mu-tabs-inverse {
         background: transparent;
         color:${colors.grey200};
     }
     .mu-tab :hover {
-        color: ${colors.cyanA200};
+        color: white;
     }
     .mu-tab-active.is-inverse {
-        color: #009688;
+        color: ${Cyberpunk[4]};
     }
     .mu-tab-active.is-inverse :hover {
-        color: ${colors.cyanA200};
-        text-shadow: 0px 0px 3px ${colors.cyanA200};
+        color: ${Cyberpunk[4]};
+        text-shadow: 0px 0px 3px ${Cyberpunk[4]};
     }
     .mu-tab-link-highlight {
-        box-shadow: 0 -2px 5px 1px ${colors.cyanA200};
+        box-shadow: 0 -2px 5px 1px ${Cyberpunk[4]};
     }
     .mu-tab-active.is-inverse.hover ~ .mu-tab-link-highlight {
-        box-shadow: 0 -2px 5px 3px ${colors.cyanA200};
+        box-shadow: 0 -2px 5px 3px ${Cyberpunk[4]};
     }
     .mu-input-line{
-        background:${colors.teal};
+        background:${Cyberpunk[4]};
     }
     .mu-input ,.mu-text-field-input{
-        color : ${colors.tealA200};
+        color : ${Cyberpunk[5]};
     }
     .mu-input-help {
-        color : ${colors.amber};
+        color : ${Cyberpunk[3]};
+    }
+    .mu-input.has-label .mu-input-label.float{
+        color : ${Cyberpunk[0]};
     }
     `;
 });
-theme.use('custom-theme')
+theme.use('Cyberpunk')

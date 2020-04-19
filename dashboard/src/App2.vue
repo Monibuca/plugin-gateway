@@ -8,7 +8,7 @@
             <mu-button icon color="primary" @click="showSettings">
                 <mu-icon value="settings"></mu-icon>
             </mu-button>
-            <mu-button v-for="item in menus" :key="item.label" color="primary" @click="item.action()">
+            <mu-button flat v-for="item in menus" :key="item.label" color="primary" @click="item.action()">
                 {{item.label}}
             </mu-button>
             <div slot="right">
@@ -143,7 +143,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .title {
     position: fixed;
     left: 200px;
@@ -185,5 +185,18 @@ export default {
     bottom: 0;
     left: 0;
     right: 0;
+}
+.ivu-modal-content {
+   box-shadow: 0 4px 12px #00BCD4;
+   background-color: #73737369;
+}
+.ivu-modal-header-inner {
+    color: #ffc107;
+}
+.ivu-modal-header {
+    border-bottom: 2px groove #6f6f6f;;
+}
+.ivu-modal-footer {
+    border-top: unset;
 }
 </style>
