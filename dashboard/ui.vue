@@ -22,7 +22,7 @@
                 </span>
             </div>
         </i-circle>
-        <i-circle :percent="CPUUsage" dashboard  trail-color="#000000" :stroke-color="['#c52dd0','#40d3fc']">
+        <i-circle :percent="CPUUsage" dashboard trail-color="#000000" :stroke-color="['#c52dd0','#40d3fc']">
             <p>CPU使用率</p>
             <span style="font-size:24px">{{CPUUsage.toFixed(2)}}%</span>
         </i-circle>
@@ -38,24 +38,11 @@
 
 
 <script>
-let summaryES = null;
+import { mapState } from "vuex";
 export default {
     name: "home",
     data() {
         return {
-            Address: location.hostname,
-            NetWork: [],
-            Rooms: [],
-            Memory: {
-                Used: 0,
-                Usage: 0
-            },
-            CPUUsage: 0,
-            HardDisk: {
-                Used: 0,
-                Usage: 0
-            },
-            Children: {},
             netWorkColumns: [
                 {
                     title: "接口",
@@ -72,24 +59,16 @@ export default {
             ]
         };
     },
-    methods: {
-        fetchSummary() {
-            summaryES = new EventSource(this.apiHost + "/api/summary");
-            summaryES.onmessage = evt => {
-                if (!evt.data) return;
-                let summary = JSON.parse(evt.data);
-                summary.Address = location.hostname;
-                if (!summary.Rooms) summary.Rooms = [];
-                summary.Rooms.sort((a, b) =>
-                    a.StreamPath > b.StreamPath ? 1 : -1
-                );
-                for (let name in summary) {
-                    this[name] = summary[name];
-                }
-            };
-        }
-    },
     computed: {
+        ...mapState([
+            "Address",
+            "NetWork",
+            "Rooms",
+            "Memory",
+            "CPUUsage",
+            "HardDisk",
+            "Children"
+        ]),
         totalInNetSpeed() {
             return (
                 this.unitFormat(
@@ -111,12 +90,6 @@ export default {
                 ) + "/S"
             );
         }
-    },
-    mounted() {
-        this.fetchSummary();
-    },
-    destroyed() {
-        summaryES.close();
     }
 };
 </script>

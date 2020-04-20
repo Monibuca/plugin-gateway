@@ -121,9 +121,9 @@ export default {
                     document.head.appendChild(linkTag);
                 }
             }
-
             this.selectPlugin("GateWay");
         });
+        this.fetchSummary()
     },
     methods: {
         ...mapActions(["fetchEngineInfo", "fetchPlugins"]),
