@@ -14,6 +14,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	. "github.com/Monibuca/engine"
+	"github.com/Monibuca/engine/avformat"
 	. "github.com/Monibuca/engine/util"
 	. "github.com/logrusorgru/aurora"
 )
@@ -40,6 +41,7 @@ func run() {
 	http.HandleFunc("/api/summary", summary)
 	http.HandleFunc("/api/config", getConfig)
 	http.HandleFunc("/api/plugins", getPlugins)
+	http.HandleFunc("/api/listenInfo", listenInfo)
 	http.HandleFunc("/plugin/", getPluginUI)
 	http.HandleFunc("/", website)
 	Print(Green("server gateway start at "), BrightBlue(config.ListenAddr))
@@ -162,4 +164,36 @@ func getPluginUI(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(404)
+}
+
+type CircleInfo struct {
+	PublisherIndex  int
+	SubscriberIndex []int
+}
+
+func listenInfo(w http.ResponseWriter, r *http.Request) {
+	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
+		if b, ok := AllRoom.Load(streamPath); ok {
+			room := b.(*Room)
+			circleInfo := new(CircleInfo)
+			circleInfo.SubscriberIndex = make([]int, 5)
+			sse := NewSSE(w, r.Context())
+			stream := new(OutputStream)
+			stream.Type = "GateWay"
+			stream.ID = r.RemoteAddr
+			stream.SendHandler = func(packet *avformat.SendPacket) (err error) {
+				circleInfo.PublisherIndex = room.AVCircle.Index
+				for i := 0; i < len(circleInfo.SubscriberIndex); i++ {
+					circleInfo.SubscriberIndex[i] = room.SubscriberInfo[i].BufferLength
+				}
+				return sse.WriteJSON(circleInfo)
+			}
+			stream.Play(streamPath)
+		} else {
+			w.Write([]byte("no query stream"))
+		}
+	} else {
+		w.Write([]byte("no such stream"))
+	}
+
 }

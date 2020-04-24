@@ -1,16 +1,19 @@
 <template>
     <div>
         <mu-appbar class="title">
-            {{currentPluginData.Name}}
-            <mu-button icon color="primary" @click="getHelp">
-                <mu-icon value="help"></mu-icon>
-            </mu-button>
-            <mu-button icon color="primary" @click="showSettings">
-                <mu-icon value="settings"></mu-icon>
-            </mu-button>
-            <mu-button flat v-for="item in menus" :key="item.label" color="primary" @click="item.action()">
+            <div style="display: flex;align-items: center;">
+                <span class="doubleText">{{currentPluginData.Name}}</span>
+                <mu-button icon color="primary" @click="getHelp">
+                    <mu-icon value="help"></mu-icon>
+                </mu-button>
+                <mu-button icon color="primary" @click="showSettings">
+                    <mu-icon value="settings"></mu-icon>
+                </mu-button>
+                <component :is="pluginAppbar" v-if="pluginAppbar"></component>
+            </div>
+            <!-- <mu-button flat v-for="item in menus" :key="item.label" color="primary" @click="item.action()">
                 {{item.label}}
-            </mu-button>
+            </mu-button> -->
             <div slot="right">
                 启动时间：{{engineInfo.StartTime}}
             </div>
@@ -68,7 +71,7 @@ export default {
             openFullscreen: false,
             openSettings: false,
             currentPluginData: {},
-            menus: []
+            pluginAppbar: null
         };
     },
     watch: {},
@@ -123,10 +126,10 @@ export default {
             }
             this.selectPlugin("GateWay");
         });
-        this.fetchSummary()
+        this.fetchSummary();
     },
     methods: {
-        ...mapActions(["fetchEngineInfo", "fetchPlugins"]),
+        ...mapActions(["fetchEngineInfo", "fetchPlugins", "fetchSummary"]),
         closeFullscreenDialog() {
             this.openFullscreen = false;
         },
@@ -149,6 +152,11 @@ export default {
     left: 200px;
     right: 0;
     top: 0;
+}
+.doubleText {
+    color: #000;
+    text-shadow: 1px 1px #40d3fc, -1px -1px #40d3fc, 1px -1px #40d3fc,
+        -1px 1px #40d3fc;
 }
 .plugin-container {
     display: flex;
@@ -187,14 +195,14 @@ export default {
     right: 0;
 }
 .ivu-modal-content {
-   box-shadow: 0 4px 12px #00BCD4;
-   background-color: #73737369;
+    box-shadow: 0 4px 12px #00bcd4;
+    background-color: #73737369;
 }
 .ivu-modal-header-inner {
     color: #ffc107;
 }
 .ivu-modal-header {
-    border-bottom: 2px groove #6f6f6f;;
+    border-bottom: 2px groove #6f6f6f;
 }
 .ivu-modal-footer {
     border-top: unset;

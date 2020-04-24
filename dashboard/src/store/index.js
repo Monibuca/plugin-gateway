@@ -82,7 +82,7 @@ export default new Vuex.Store({
         summary.Rooms.sort((a, b) =>
           a.StreamPath > b.StreamPath ? 1 : -1
         );
-        commit("update", { summary })
+        commit("update", summary)
       };
     },
   },

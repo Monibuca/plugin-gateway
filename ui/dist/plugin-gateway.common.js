@@ -3125,12 +3125,12 @@ if (typeof window !== 'undefined') {
 // Indicate to webpack that this file can be concatenated
 /* harmony default export */ var setPublicPath = (null);
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"0ba24d02-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./ui.vue?vue&type=template&id=412b1ff8&
-var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.Memory.Usage,"stroke-color":['#c52dd0','#40d3fc'],"trail-color":"#000000"}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.unitFormat(_vm.Memory.Used,"M")))]),_c('p',[_vm._v("内存使用")]),_c('span',[_vm._v(" 占总内存 "),_c('i',[_vm._v(_vm._s(_vm.Memory.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.HardDisk.Usage,"stroke-color":['#c52dd0','#40d3fc'],"trail-color":"#000000"}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.unitFormat(_vm.HardDisk.Used,"M")))]),_c('p',[_vm._v("硬盘使用")]),_c('span',[_vm._v(" 占总硬盘 "),_c('i',[_vm._v(_vm._s(_vm.HardDisk.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"percent":_vm.CPUUsage,"dashboard":"","trail-color":"#000000","stroke-color":['#c52dd0','#40d3fc']}},[_c('p',[_vm._v("CPU使用率")]),_c('span',{staticStyle:{"font-size":"24px"}},[_vm._v(_vm._s(_vm.CPUUsage.toFixed(2))+"%")])]),_c('mu-data-table',{attrs:{"columns":_vm.netWorkColumns,"data":_vm.NetWork},scopedSlots:_vm._u([{key:"default",fn:function(scope){return [_c('td',[_vm._v(_vm._s(scope.row.Name))]),_c('td',[_vm._v(_vm._s(_vm.unitFormat(scope.row.ReceiveSpeed) + "/S"))]),_c('td',[_vm._v(_vm._s(_vm.unitFormat(scope.row.SentSpeed) + "/S"))])]}}])})],1)}
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"0ba24d02-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./ui.vue?vue&type=template&id=3d0242bd&
+var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[(_vm.active1===0)?_c('div',[_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.Memory.Usage,"stroke-color":['#c52dd0','#40d3fc'],"trail-color":"#000000"}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.unitFormat(_vm.Memory.Used,"M")))]),_c('p',[_vm._v("内存使用")]),_c('span',[_vm._v(" 占总内存 "),_c('i',[_vm._v(_vm._s(_vm.Memory.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.HardDisk.Usage,"stroke-color":['#c52dd0','#40d3fc'],"trail-color":"#000000"}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.unitFormat(_vm.HardDisk.Used,"M")))]),_c('p',[_vm._v("硬盘使用")]),_c('span',[_vm._v(" 占总硬盘 "),_c('i',[_vm._v(_vm._s(_vm.HardDisk.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"percent":_vm.CPUUsage,"dashboard":"","trail-color":"#000000","stroke-color":['#c52dd0','#40d3fc']}},[_c('p',[_vm._v("CPU使用率")]),_c('span',{staticStyle:{"font-size":"24px"}},[_vm._v(_vm._s(_vm.CPUUsage.toFixed(2))+"%")])]),_c('mu-data-table',{attrs:{"columns":_vm.netWorkColumns,"data":_vm.NetWork},scopedSlots:_vm._u([{key:"default",fn:function(scope){return [_c('td',[_vm._v(_vm._s(scope.row.Name))]),_c('td',[_vm._v(_vm._s(_vm.unitFormat(scope.row.ReceiveSpeed) + "/S"))]),_c('td',[_vm._v(_vm._s(_vm.unitFormat(scope.row.SentSpeed) + "/S"))])]}}],null,false,1212955354)})],1):_vm._e(),_c('mu-data-table',{attrs:{"columns":_vm.columns,"data":_vm.$store.state.Rooms,"min-col-width":50},on:{"row-click":function($event){_vm.showDetail=true}},scopedSlots:_vm._u([{key:"default",fn:function(scope){return [_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.StreamPath))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.Type||"await"))]),_c('td',{staticClass:"is-center"},[_c('StartTime',{attrs:{"value":scope.row.StartTime}})],1),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.SoundFormat(scope.row.AudioInfo.SoundFormat)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.SoundRate(scope.row.AudioInfo.SoundRate)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.AudioInfo.SoundType))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.CodecID(scope.row.VideoInfo.CodecID)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.VideoInfo.SPSInfo.Width)+"x"+_vm._s(scope.row.VideoInfo.SPSInfo.Height))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.AudioInfo.PacketCount)+"/"+_vm._s(scope.row.VideoInfo.PacketCount))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.SubscriberInfo.length))])]}}])})],1)}
 var staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./ui.vue?vue&type=template&id=412b1ff8&
+// CONCATENATED MODULE: ./ui.vue?vue&type=template&id=3d0242bd&
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.array.reduce.js
 var es_array_reduce = __webpack_require__("13d5");
@@ -3259,11 +3259,31 @@ var vuex_esm = __webpack_require__("2f62");
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ var lib_vue_loader_options_uivue_type_script_lang_js_ = ({
   name: "home",
   data: function data() {
     return {
+      active1: 0,
+      showDetail: false,
       netWorkColumns: [{
         title: "接口",
         name: "Name"
@@ -3273,7 +3293,58 @@ var vuex_esm = __webpack_require__("2f62");
       }, {
         title: "发送",
         name: "SentSpeed"
+      }],
+      columns: [{
+        title: "房间",
+        name: "StreamPath",
+        sortable: true
+      }, {
+        title: "类型",
+        name: "Type",
+        sortable: true
+      }, {
+        title: "开始时间",
+        name: "StartTime",
+        sortable: true
+      }, {
+        title: "音频格式",
+        name: "AudioInfo"
+      }, {
+        title: "采样率",
+        name: "AudioInfo"
+      }, {
+        title: "声道",
+        name: "AudioInfo"
+      }, {
+        title: "视频格式",
+        name: "VideoInfo"
+      }, {
+        title: "分辨率",
+        name: "VideoInfo"
+      }, {
+        title: "数据包",
+        name: ""
+      }, {
+        title: "订阅者",
+        name: "Subscribes"
       }]
+    };
+  },
+  mounted: function mounted() {
+    var _this = this;
+
+    this.$parent.pluginAppbar = {
+      data: function data() {
+        return {
+          active1: 0
+        };
+      },
+      watch: {
+        active1: function active1(v) {
+          _this.active1 = v;
+        }
+      },
+      template: "\n            <mu-tabs :value.sync=\"active1\" indicator-color=\"#80deea\" inverse center>\n            <mu-tab>\u670D\u52A1\u5668\u72B6\u6001</mu-tab>\n            <mu-tab>\u623F\u95F4\u5217\u8868</mu-tab>\n        </mu-tabs>"
     };
   },
   computed: _objectSpread2({}, Object(vuex_esm["a" /* mapState */])(["Address", "NetWork", "Rooms", "Memory", "CPUUsage", "HardDisk", "Children"]), {

@@ -23,7 +23,7 @@ Vue.use(Toast);
 
 Vue.use(MuseUI);
 //0 蓝，1 红，2 紫，3 洋红,4 青 ，5 黄
-const Cyberpunk = ["#153ad0","#d11b58","#4a1798","#c52dd0","#40d3fc","#feeb73"]
+const Cyberpunk = ["#153ad0", "#d11b58", "#4a1798", "#c52dd0", "#40d3fc", "#feeb73"]
 theme.add('Cyberpunk', {
     primary: Cyberpunk[4],
     secondary: colors.amber,
@@ -67,14 +67,6 @@ theme.addCreateTheme(() => {
     }
     .mu-appbar{
         background: #000;
-        color : #000;
-        text-shadow: 
-        1px 1px ${Cyberpunk[4]},
-        -1px -1px ${Cyberpunk[4]},
-        1px -1px ${Cyberpunk[4]},
-        -1px 1px ${Cyberpunk[4]};
-    }
-    .mu-appbar .mu-button{
         color :${Cyberpunk[4]}
     }
     .mu-dialog{
