@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -166,29 +167,26 @@ func getPluginUI(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(404)
 }
 
-type CircleInfo struct {
-	PublisherIndex  int
-	SubscriberIndex []int
-}
-
 func listenInfo(w http.ResponseWriter, r *http.Request) {
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
 		if b, ok := AllRoom.Load(streamPath); ok {
 			room := b.(*Room)
-			circleInfo := new(CircleInfo)
-			circleInfo.SubscriberIndex = make([]int, 5)
+
 			sse := NewSSE(w, r.Context())
 			stream := new(OutputStream)
 			stream.Type = "GateWay"
 			stream.ID = r.RemoteAddr
 			stream.SendHandler = func(packet *avformat.SendPacket) (err error) {
-				circleInfo.PublisherIndex = room.AVCircle.Index
-				for i := 0; i < len(circleInfo.SubscriberIndex); i++ {
-					circleInfo.SubscriberIndex[i] = room.SubscriberInfo[i].BufferLength
+				sendTxt := strconv.Itoa(room.AVCircle.Index)
+				for i := 0; i < 5 && i < len(room.SubscriberInfo); i++ {
+					sendTxt += "," + strconv.Itoa(room.SubscriberInfo[i].BufferLength)
 				}
-				return sse.WriteJSON(circleInfo)
+				_, err = sse.Write([]byte(sendTxt))
+				return
 			}
-			stream.Play(streamPath)
+			go stream.Play(streamPath)
+			<-r.Context().Done()
+			stream.Cancel()
 		} else {
 			w.Write([]byte("no query stream"))
 		}

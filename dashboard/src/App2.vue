@@ -15,12 +15,12 @@
                 {{item.label}}
             </mu-button> -->
             <div slot="right">
-                启动时间：{{engineInfo.StartTime}}
+                启动时间： <StartTime :value="engineInfo.StartTime"></StartTime>
             </div>
         </mu-appbar>
         <mu-drawer open width="200">
             <mu-appbar :z-depth="0">
-                <div style="line-height:24px"><img src="favicon.ico" width="24" style="    vertical-align: top;">onibuca
+                <div style="line-height:24px"><img src="favicon.ico" width="24" style="vertical-align: top;">onibuca
                 </div>
                 <div style="font-size:10px;line-height:24px">engine: {{engineInfo.Version}}</div>
             </mu-appbar>
@@ -59,6 +59,7 @@
 import Vue from "vue";
 import { mapActions, mapState } from "vuex";
 import VueMarkdown from "vue-markdown";
+
 import toml from "@iarna/toml";
 // const appStyle = [];
 
@@ -134,6 +135,7 @@ export default {
             this.openFullscreen = false;
         },
         selectPlugin(name) {
+            this.pluginAppbar = null
             this.currentPluginData = this.plugins.find(x => x.Name == name);
         },
         getHelp() {

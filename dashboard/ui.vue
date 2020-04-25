@@ -1,6 +1,5 @@
 <template>
     <div>
-
         <div v-if="active1===0">
             <i-circle dashboard :size="250" :trail-width="4" :stroke-width="5" :percent="Memory.Usage"
                 :stroke-color="['#c52dd0','#40d3fc']" trail-color="#000000">
@@ -36,33 +35,39 @@
                 </template>
             </mu-data-table>
         </div>
-        <mu-data-table :columns="columns" :data="$store.state.Rooms" :min-col-width="50" @row-click="showDetail=true">
+        <mu-data-table v-else :columns="columns" :data="$store.state.Rooms" :min-col-width="50" @row-click="onClickRoom">
             <template slot-scope="scope">
                 <td class="is-center">{{scope.row.StreamPath}}</td>
                 <td class="is-center">{{scope.row.Type||"await"}}</td>
-                <td class="is-center">
-                    <StartTime :value="scope.row.StartTime"></StartTime>
-                </td>
+                <td class="is-center"><StartTime :value="scope.row.StartTime"></StartTime></td>
                 <td class="is-center">{{SoundFormat(scope.row.AudioInfo.SoundFormat)}}</td>
                 <td class="is-center">{{SoundRate(scope.row.AudioInfo.SoundRate)}}</td>
                 <td class="is-center">{{scope.row.AudioInfo.SoundType}}</td>
                 <td class="is-center">{{CodecID(scope.row.VideoInfo.CodecID)}}</td>
                 <td class="is-center">{{scope.row.VideoInfo.SPSInfo.Width}}x{{scope.row.VideoInfo.SPSInfo.Height}}</td>
-                <td class="is-center">{{scope.row.AudioInfo.PacketCount}}/{{scope.row.VideoInfo.PacketCount}}</td>
+                <td class="is-center">{{unitFormat(scope.row.AudioInfo.BPS)}}/{{unitFormat(scope.row.VideoInfo.BPS)}}</td>
                 <td class="is-center">{{scope.row.SubscriberInfo.length}}</td>
             </template>
         </mu-data-table>
+        <mu-dialog width="300" transition="slide-bottom" :open.sync="showDetail">
+            <div class="circle">
+                <div v-for="n in 256" :key="n" :style="{top:(Math.cos(n*Math.PI*2/256)*128+128)+'px',left:(Math.sin(n*Math.PI*2/256)*128+128)+'px'}" :class="currentRoomInfo ? n==currentRoomInfo[0]?'publisher':currentRoomInfo.indexOf(currentRoomInfo[0]-n)!=-1?'subscriber':'':''">●</div>
+            </div>
+        </mu-dialog>
     </div>
 </template>
 
 <script>
 import { mapState } from "vuex";
+let es = null
 export default {
     name: "home",
     data() {
         return {
             active1: 0,
             showDetail: false,
+            currentRoom:null,
+            currentRoomInfo:null,
             netWorkColumns: [
                 {
                     title: "接口",
@@ -79,50 +84,51 @@ export default {
             ],
             columns: [
                 {
-                    title: "房间",
-                    name: "StreamPath",
-                    sortable: true
+                    title: "房间",align: "center",
                 },
                 {
-                    title: "类型",
-                    name: "Type",
-                    sortable: true
+                    title: "类型",align: "center",
                 },
                 {
-                    title: "开始时间",
-                    name: "StartTime",
-                    sortable: true
+                    title: "开始时间",align: "center",
                 },
                 {
-                    title: "音频格式",
-                    name: "AudioInfo"
+                    title: "音频格式",align: "center",
                 },
                 {
-                    title: "采样率",
-                    name: "AudioInfo"
+                    title: "采样率",align: "center",
                 },
                 {
-                    title: "声道",
-                    name: "AudioInfo"
+                    title: "声道",align: "center",
                 },
                 {
-                    title: "视频格式",
-                    name: "VideoInfo"
+                    title: "视频格式",align: "center",
                 },
                 {
-                    title: "分辨率",
-                    name: "VideoInfo"
+                    title: "分辨率",align: "center",
                 },
                 {
-                    title: "数据包",
-                    name: ""
+                    title: "码率A/V",align: "center",
                 },
                 {
-                    title: "订阅者",
-                    name: "Subscribes"
+                    title: "订阅者",align: "center",
                 }
             ]
         };
+    },
+    methods:{
+        onClickRoom(index,row){
+            this.showDetail=true
+            this.currentRoom = row
+            if(es){
+                es.close()
+            }
+            es = new EventSource("/api/listenInfo?stream="+row.StreamPath)
+            es.onmessage = evt=>{
+                const data = evt.data.split(',')
+                this.currentRoomInfo = data.map(x=>x|0)
+            }
+        }
     },
     mounted() {
         const _this = this;
@@ -175,11 +181,35 @@ export default {
                 ) + "/S"
             );
         }
+    },
+    destroyed(){
+        es.close()
     }
 };
 </script>
 
 <style lang="less">
+.circle {
+    width:300px;height:300px;position:relative;
+    & div {
+        color:darkslategray;
+        position: absolute;
+        &.publisher {
+            color: yellow;
+            text-shadow: 2px 2px 3px yellow,
+            2px -2px 3px yellow,
+            -2px -2px 3px yellow,
+            -2px 2px 3px yellow;
+        }
+        &.subscriber{
+            color:cyan;
+            text-shadow: 2px 2px 3px cyan,
+            2px -2px 3px cyan,
+            -2px -2px 3px cyan,
+            -2px 2px 3px cyan;
+        }
+    }
+}
 .demo-Circle-custom {
     & h1 {
         color: #feeb73;

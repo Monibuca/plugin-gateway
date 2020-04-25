@@ -3,6 +3,7 @@ import App from './App2.vue'
 import store from './store'
 import './plugins/iview'
 import './plugins/muse-ui.js'
+import StartTime from "./components/StartTime"
 Vue.config.productionTip = false
 window.Vue = Vue
 
@@ -21,6 +22,7 @@ function unitFormat(value, unit = "") {
 }
 Vue.prototype.ajax = window.ajax
 Vue.prototype.unitFormat = unitFormat
+Vue.component('StartTime', StartTime)
 new Vue({
   store,
   render: h => h(App)
