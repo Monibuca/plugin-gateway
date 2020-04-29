@@ -87,6 +87,21 @@ module.exports =
 /************************************************************************/
 /******/ ({
 
+/***/ "00ee":
+/***/ (function(module, exports, __webpack_require__) {
+
+var wellKnownSymbol = __webpack_require__("b622");
+
+var TO_STRING_TAG = wellKnownSymbol('toStringTag');
+var test = {};
+
+test[TO_STRING_TAG] = 'z';
+
+module.exports = String(test) === '[object z]';
+
+
+/***/ }),
+
 /***/ "0366":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -583,6 +598,39 @@ var hiddenKeys = enumBugKeys.concat('length', 'prototype');
 exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
   return internalObjectKeys(O, hiddenKeys);
 };
+
+
+/***/ }),
+
+/***/ "25f0":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var redefine = __webpack_require__("6eeb");
+var anObject = __webpack_require__("825a");
+var fails = __webpack_require__("d039");
+var flags = __webpack_require__("ad6d");
+
+var TO_STRING = 'toString';
+var RegExpPrototype = RegExp.prototype;
+var nativeToString = RegExpPrototype[TO_STRING];
+
+var NOT_GENERIC = fails(function () { return nativeToString.call({ source: 'a', flags: 'b' }) != '/a/b'; });
+// FF44- RegExp#toString has a wrong name
+var INCORRECT_NAME = nativeToString.name != TO_STRING;
+
+// `RegExp.prototype.toString` method
+// https://tc39.github.io/ecma262/#sec-regexp.prototype.tostring
+if (NOT_GENERIC || INCORRECT_NAME) {
+  redefine(RegExp.prototype, TO_STRING, function toString() {
+    var R = anObject(this);
+    var p = String(R.source);
+    var rf = R.flags;
+    var f = String(rf === undefined && R instanceof RegExp && !('flags' in RegExpPrototype) ? flags.call(R) : rf);
+    return '/' + p + '/' + f;
+  }, { unsafe: true });
+}
 
 
 /***/ }),
@@ -2515,6 +2563,32 @@ exports.BROKEN_CARET = fails(function () {
 
 /***/ }),
 
+/***/ "a15b":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__("23e7");
+var IndexedObject = __webpack_require__("44ad");
+var toIndexedObject = __webpack_require__("fc6a");
+var arrayMethodIsStrict = __webpack_require__("a640");
+
+var nativeJoin = [].join;
+
+var ES3_STRINGS = IndexedObject != Object;
+var STRICT_METHOD = arrayMethodIsStrict('join', ',');
+
+// `Array.prototype.join` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.join
+$({ target: 'Array', proto: true, forced: ES3_STRINGS || !STRICT_METHOD }, {
+  join: function join(separator) {
+    return nativeJoin.call(toIndexedObject(this), separator === undefined ? ',' : separator);
+  }
+});
+
+
+/***/ }),
+
 /***/ "a4d3":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2940,6 +3014,23 @@ module.exports = function (METHOD_NAME, options) {
 
 /***/ }),
 
+/***/ "b041":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var TO_STRING_TAG_SUPPORT = __webpack_require__("00ee");
+var classof = __webpack_require__("f5df");
+
+// `Object.prototype.toString` method implementation
+// https://tc39.github.io/ecma262/#sec-object.prototype.tostring
+module.exports = TO_STRING_TAG_SUPPORT ? {}.toString : function toString() {
+  return '[object ' + classof(this) + ']';
+};
+
+
+/***/ }),
+
 /***/ "b622":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -3254,6 +3345,22 @@ exports.f = NASHORN_BUG ? function propertyIsEnumerable(V) {
   var descriptor = getOwnPropertyDescriptor(this, V);
   return !!descriptor && descriptor.enumerable;
 } : nativePropertyIsEnumerable;
+
+
+/***/ }),
+
+/***/ "d3b7":
+/***/ (function(module, exports, __webpack_require__) {
+
+var TO_STRING_TAG_SUPPORT = __webpack_require__("00ee");
+var redefine = __webpack_require__("6eeb");
+var toString = __webpack_require__("b041");
+
+// `Object.prototype.toString` method
+// https://tc39.github.io/ecma262/#sec-object.prototype.tostring
+if (!TO_STRING_TAG_SUPPORT) {
+  redefine(Object.prototype, 'toString', toString, { unsafe: true });
+}
 
 
 /***/ }),
@@ -3628,6 +3735,39 @@ module.exports = Array.isArray || function isArray(arg) {
 
 /***/ }),
 
+/***/ "f5df":
+/***/ (function(module, exports, __webpack_require__) {
+
+var TO_STRING_TAG_SUPPORT = __webpack_require__("00ee");
+var classofRaw = __webpack_require__("c6b6");
+var wellKnownSymbol = __webpack_require__("b622");
+
+var TO_STRING_TAG = wellKnownSymbol('toStringTag');
+// ES3 wrong here
+var CORRECT_ARGUMENTS = classofRaw(function () { return arguments; }()) == 'Arguments';
+
+// fallback for IE11 Script Access Denied error
+var tryGet = function (it, key) {
+  try {
+    return it[key];
+  } catch (error) { /* empty */ }
+};
+
+// getting tag from ES6+ `Object.prototype.toString`
+module.exports = TO_STRING_TAG_SUPPORT ? classofRaw : function (it) {
+  var O, tag, result;
+  return it === undefined ? 'Undefined' : it === null ? 'Null'
+    // @@toStringTag case
+    : typeof (tag = tryGet(O = Object(it), TO_STRING_TAG)) == 'string' ? tag
+    // builtinTag case
+    : CORRECT_ARGUMENTS ? classofRaw(O)
+    // ES3 arguments fallback
+    : (result = classofRaw(O)) == 'Object' && typeof O.callee == 'function' ? 'Arguments' : result;
+};
+
+
+/***/ }),
+
 /***/ "f6fd":
 /***/ (function(module, exports) {
 
@@ -3709,12 +3849,15 @@ if (typeof window !== 'undefined') {
 // Indicate to webpack that this file can be concatenated
 /* harmony default export */ var setPublicPath = (null);
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"0ba24d02-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./ui.vue?vue&type=template&id=897dadde&
-var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[(_vm.active1===0)?_c('div',[_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.Memory.Usage,"stroke-color":['#c52dd0','#40d3fc'],"trail-color":"#000000"}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.unitFormat(_vm.Memory.Used,"M")))]),_c('p',[_vm._v("内存使用")]),_c('span',[_vm._v(" 占总内存 "),_c('i',[_vm._v(_vm._s(_vm.Memory.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.HardDisk.Usage,"stroke-color":['#c52dd0','#40d3fc'],"trail-color":"#000000"}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.unitFormat(_vm.HardDisk.Used,"M")))]),_c('p',[_vm._v("硬盘使用")]),_c('span',[_vm._v(" 占总硬盘 "),_c('i',[_vm._v(_vm._s(_vm.HardDisk.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"percent":_vm.CPUUsage,"dashboard":"","trail-color":"#000000","stroke-color":['#c52dd0','#40d3fc']}},[_c('p',[_vm._v("CPU使用率")]),_c('span',{staticStyle:{"font-size":"24px"}},[_vm._v(_vm._s(_vm.CPUUsage.toFixed(2))+"%")])]),_c('mu-data-table',{attrs:{"columns":_vm.netWorkColumns,"data":_vm.NetWork},scopedSlots:_vm._u([{key:"default",fn:function(scope){return [_c('td',[_vm._v(_vm._s(scope.row.Name))]),_c('td',[_vm._v(_vm._s(_vm.unitFormat(scope.row.ReceiveSpeed) + "/S"))]),_c('td',[_vm._v(_vm._s(_vm.unitFormat(scope.row.SentSpeed) + "/S"))])]}}],null,false,1212955354)})],1):_c('mu-data-table',{attrs:{"columns":_vm.columns,"data":_vm.$store.state.Rooms,"min-col-width":50},on:{"row-click":_vm.onClickRoom},scopedSlots:_vm._u([{key:"default",fn:function(scope){return [_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.StreamPath))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.Type||"await"))]),_c('td',{staticClass:"is-center"},[_c('StartTime',{attrs:{"value":scope.row.StartTime}})],1),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.SoundFormat(scope.row.AudioInfo.SoundFormat)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.SoundRate(scope.row.AudioInfo.SoundRate)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.AudioInfo.SoundType))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.CodecID(scope.row.VideoInfo.CodecID)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.VideoInfo.SPSInfo.Width)+"x"+_vm._s(scope.row.VideoInfo.SPSInfo.Height))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.unitFormat(scope.row.AudioInfo.BPS))+"/"+_vm._s(_vm.unitFormat(scope.row.VideoInfo.BPS)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.SubscriberInfo.length))])]}}])}),_c('mu-dialog',{attrs:{"width":"300","transition":"slide-bottom","open":_vm.showDetail},on:{"update:open":function($event){_vm.showDetail=$event}}},[_c('div',{staticClass:"circle"},_vm._l((256),function(n){return _c('div',{key:n,class:_vm.currentRoomInfo ? n==_vm.currentRoomInfo[0]?'publisher':_vm.currentRoomInfo.indexOf(_vm.currentRoomInfo[0]-n)!=-1?'subscriber':'':'',style:({top:(Math.cos(n*Math.PI*2/256)*128+128)+'px',left:(Math.sin(n*Math.PI*2/256)*128+128)+'px'})},[_vm._v("●")])}),0)])],1)}
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"0ba24d02-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./ui.vue?vue&type=template&id=66156049&
+var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[(_vm.active1===0)?_c('div',[_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.Memory.Usage,"stroke-color":['#c52dd0','#40d3fc'],"trail-color":"#000000"}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.unitFormat(_vm.Memory.Used,"M")))]),_c('p',[_vm._v("内存使用")]),_c('span',[_vm._v(" 占总内存 "),_c('i',[_vm._v(_vm._s(_vm.Memory.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.HardDisk.Usage,"stroke-color":['#c52dd0','#40d3fc'],"trail-color":"#000000"}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.unitFormat(_vm.HardDisk.Used,"M")))]),_c('p',[_vm._v("硬盘使用")]),_c('span',[_vm._v(" 占总硬盘 "),_c('i',[_vm._v(_vm._s(_vm.HardDisk.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"percent":_vm.CPUUsage,"dashboard":"","trail-color":"#000000","stroke-color":['#c52dd0','#40d3fc']}},[_c('p',[_vm._v("CPU使用率")]),_c('span',{staticStyle:{"font-size":"24px"}},[_vm._v(_vm._s(_vm.CPUUsage.toFixed(2))+"%")])]),_c('mu-data-table',{attrs:{"columns":_vm.netWorkColumns,"data":_vm.NetWork},scopedSlots:_vm._u([{key:"default",fn:function(scope){return [_c('td',[_vm._v(_vm._s(scope.row.Name))]),_c('td',[_vm._v(_vm._s(_vm.unitFormat(scope.row.ReceiveSpeed) + "/S"))]),_c('td',[_vm._v(_vm._s(_vm.unitFormat(scope.row.SentSpeed) + "/S"))])]}}],null,false,1212955354)})],1):_c('mu-data-table',{attrs:{"columns":_vm.columns,"data":_vm.$store.state.Rooms,"min-col-width":50},scopedSlots:_vm._u([{key:"expand",fn:function(prop){return [_c('div',[_c('mu-button',{attrs:{"flat":""},on:{"click":function($event){return _vm.showCircle(prop.row)}}},[_vm._v("查看缓冲环")]),_c('mu-button',{attrs:{"flat":""},on:{"click":function($event){return _vm.snapshot(prop.row)}}},[_vm._v("查看缓冲快照")])],1)]}},{key:"default",fn:function(scope){return [_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.StreamPath))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.Type||"await"))]),_c('td',{staticClass:"is-center"},[_c('StartTime',{attrs:{"value":scope.row.StartTime}})],1),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.SoundFormat(scope.row.AudioInfo.SoundFormat)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.SoundRate(scope.row.AudioInfo.SoundRate)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.AudioInfo.SoundType))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.CodecID(scope.row.VideoInfo.CodecID)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.VideoInfo.SPSInfo.Width)+"x"+_vm._s(scope.row.VideoInfo.SPSInfo.Height)+" ")]),_c('td',{staticClass:"is-center"},[_vm._v(" "+_vm._s(_vm.unitFormat(scope.row.AudioInfo.BPS))+"/"+_vm._s(_vm.unitFormat(scope.row.VideoInfo.BPS))+" ")]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.SubscriberInfo.length))])]}}])}),_c('mu-dialog',{attrs:{"width":"330","transition":"slide-top","open":_vm.showDetail},on:{"close":_vm.onCloseDetail,"update:open":function($event){_vm.showDetail=$event}}},[_c('div',[_vm._v("实时缓冲读写环")]),_c('svg',{attrs:{"xmlns":"http://www.w3.org/2000/svg","version":"1.1","width":"330","height":"330"}},[_c('filter',{attrs:{"id":"track"}},[_c('feColorMatrix',{attrs:{"type":"matrix","result":"color","values":"\n                0 0 0 0  0\n                0 0 0 .9 0\n                0 0 0 .9 0\n                0 0 0 1  0\n                "}}),_c('feGaussianBlur',{attrs:{"in":"color","stdDeviation":"4","result":"blur"}}),_c('feOffset',{attrs:{"in":"blur","dx":"0","dy":"0","result":"offset"}}),_c('feMerge',[_c('feMergeNode',{attrs:{"in":"offset"}}),_c('feMergeNode',{attrs:{"in":"SourceGraphic"}})],1)],1),_c('circle',{attrs:{"r":"5","cx":"100","cy":"130","fill":"yellow"}}),_c('text',{attrs:{"x":"120","y":"135","fill":"white"}},[_vm._v("publisher")]),_c('circle',{attrs:{"r":"5","cx":"100","cy":"145","fill":"tomato"}}),_c('text',{attrs:{"x":"120","y":"150","fill":"white"}},[_vm._v("subscriber")]),_c('a',{on:{"click":_vm.showSlider}},[_c('text',{attrs:{"x":"90","y":"175","fill":"wheat"}},[_vm._v("最大显示个数："+_vm._s(_vm.maxSubDetail))])]),_c('circle',{attrs:{"stroke-dasharray":"10,2","cx":"140","cy":"140","r":_vm.ringR,"stroke":"cyan","stroke-width":"4","fill":"none","filter":"url(#track)"}}),_vm._l((_vm.currentRoomInfo),function(n,i){return [_c('circle',{key:i,attrs:{"fill":"tomato","r":"5","cx":Math.sin((_vm.pubIndex-n)*Math.PI/_vm.ringR)*_vm.subR+140,"cy":Math.cos((_vm.pubIndex-n)*Math.PI/_vm.ringR)*_vm.subR+140}})]}),_c('circle',{attrs:{"fill":"cyan","r":"4","cx":Math.sin(_vm.firstIndex*Math.PI/_vm.ringR)*_vm.ringR+140,"cy":Math.cos(_vm.firstIndex*Math.PI/_vm.ringR)*_vm.ringR+140}}),_c('circle',{attrs:{"fill":"yellow","r":"5","cx":Math.sin(_vm.pubIndex*Math.PI/_vm.ringR)*_vm.pubR+140,"cy":Math.cos(_vm.pubIndex*Math.PI/_vm.ringR)*_vm.pubR+140}})],2)]),_c('mu-dialog',{attrs:{"width":"500","transition":"slide-top","open":_vm.showSnapshot},on:{"update:open":function($event){_vm.showSnapshot=$event}}},[_c('div',[_vm._v("缓冲快照")]),_c('mu-dialog',{attrs:{"columns":_vm.snapshotColumns,"data":_vm.snapshotData}})],1)],1)}
 var staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./ui.vue?vue&type=template&id=897dadde&
+// CONCATENATED MODULE: ./ui.vue?vue&type=template&id=66156049&
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.array.join.js
+var es_array_join = __webpack_require__("a15b");
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.array.map.js
 var es_array_map = __webpack_require__("d81d");
@@ -3722,8 +3865,14 @@ var es_array_map = __webpack_require__("d81d");
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.array.reduce.js
 var es_array_reduce = __webpack_require__("13d5");
 
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.object.to-string.js
+var es_object_to_string = __webpack_require__("d3b7");
+
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.regexp.exec.js
 var es_regexp_exec = __webpack_require__("ac1f");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.regexp.to-string.js
+var es_regexp_to_string = __webpack_require__("25f0");
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.string.split.js
 var es_string_split = __webpack_require__("1276");
@@ -3816,6 +3965,59 @@ var vuex_esm = __webpack_require__("2f62");
 
 
 
+
+
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -3881,10 +4083,36 @@ var es = null;
   name: "home",
   data: function data() {
     return {
+      pubR: 126,
+      subR: 130,
+      ringR: 128,
       active1: 0,
       showDetail: false,
+      showSnapshot: false,
+      maxSubDetail: 5,
       currentRoom: null,
-      currentRoomInfo: null,
+      pubIndex: 0,
+      firstIndex: 0,
+      currentRoomInfo: [],
+      snapshotColumns: [{
+        title: "类型",
+        name: "Type",
+        formatter: function formatter(value) {
+          return value == 8 ? "Audio" : "Video";
+        }
+      }, {
+        title: "时间戳",
+        name: "Timestamp"
+      }, {
+        title: "内容",
+        name: "Payload",
+        formatter: function formatter(value) {
+          return atob(value).split("").map(function (x) {
+            return x.charCodeAt(0).toString(16);
+          }).join(" ");
+        }
+      }],
+      snapshotData: [],
       netWorkColumns: [{
         title: "接口",
         name: "Name"
@@ -3929,9 +4157,7 @@ var es = null;
     };
   },
   methods: {
-    onClickRoom: function onClickRoom(index, row) {
-      var _this2 = this;
-
+    showCircle: function showCircle(row) {
       this.showDetail = true;
       this.currentRoom = row;
 
@@ -3939,14 +4165,61 @@ var es = null;
         es.close();
       }
 
-      es = new EventSource("/api/listenInfo?stream=" + row.StreamPath);
+      this.startListen();
+    },
+    onCloseDetail: function onCloseDetail() {
+      es.close();
+    },
+    startListen: function startListen() {
+      es = new EventSource("/api/listenInfo?stream=" + this.currentRoom.StreamPath + "&max=" + this.maxSubDetail);
 
       es.onmessage = function (evt) {
-        var data = evt.data.split(',');
-        _this2.currentRoomInfo = data.map(function (x) {
-          return x | 0;
-        });
+        var data = evt.data;
+        console.log(btoa(data));
+
+        for (var i = 0; i < data.length; i++) {
+          console.log(i, data.charCodeAt(i));
+        } // this.pubIndex = data[0];
+        // this.firstIndex = data[1];
+        // this.currentRoomInfo = data.slice(2);
+
       };
+    },
+    showSlider: function showSlider() {
+      var _this2 = this;
+
+      this.$confirm(function (h) {
+        return h("mu-slider", {
+          props: {
+            value: _this2.maxSubDetail,
+            max: _this2.currentRoomInfo.length,
+            min: 1,
+            step: 1
+          },
+          on: {
+            change: function change(v) {
+              _this2.maxSubDetail = v;
+            }
+          }
+        });
+      }, "修改最大显示个数").then(function (_ref) {
+        var result = _ref.result;
+
+        if (result) {
+          es.close();
+
+          _this2.startListen();
+        }
+      });
+    },
+    snapshot: function snapshot(row) {
+      var _this3 = this;
+
+      this.showSnapshot = true;
+      this.currentRoom = row;
+      this.ajax.getJSON("/api/snapshot?stream=" + this.currentRoom.StreamPath).then(function (data) {
+        _this3.snapshotData = data;
+      });
     }
   },
   mounted: function mounted() {

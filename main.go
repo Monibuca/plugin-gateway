@@ -43,6 +43,7 @@ func run() {
 	http.HandleFunc("/api/config", getConfig)
 	http.HandleFunc("/api/plugins", getPlugins)
 	http.HandleFunc("/api/listenInfo", listenInfo)
+	http.HandleFunc("/api/snapshot", snapshot)
 	http.HandleFunc("/plugin/", getPluginUI)
 	http.HandleFunc("/", website)
 	Print(Green("server gateway start at "), BrightBlue(config.ListenAddr))
@@ -169,6 +170,10 @@ func getPluginUI(w http.ResponseWriter, r *http.Request) {
 
 func listenInfo(w http.ResponseWriter, r *http.Request) {
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
+		maxSub := 5
+		if max := r.URL.Query().Get("max"); max != "" {
+			maxSub, _ = strconv.Atoi(max)
+		}
 		if b, ok := AllRoom.Load(streamPath); ok {
 			room := b.(*Room)
 
@@ -177,21 +182,65 @@ func listenInfo(w http.ResponseWriter, r *http.Request) {
 			stream.Type = "GateWay"
 			stream.ID = r.RemoteAddr
 			stream.SendHandler = func(packet *avformat.SendPacket) (err error) {
-				sendTxt := strconv.Itoa(room.AVCircle.Index)
-				for i := 0; i < 5 && i < len(room.SubscriberInfo); i++ {
-					sendTxt += "," + strconv.Itoa(room.SubscriberInfo[i].BufferLength)
+				l := maxSub
+				if l > len(room.SubscriberInfo) {
+					l = len(room.SubscriberInfo)
 				}
-				_, err = sse.Write([]byte(sendTxt))
+				l += 2
+				sendList := make([]byte, l)
+				sendList[0] = room.AVRing.Index
+				sendList[1] = room.FirstScreen.Index
+				for i := 0; i < maxSub && i < len(room.SubscriberInfo); i++ {
+					sendList[i+2] = room.SubscriberInfo[i].BufferLength
+				}
+				_, err = sse.Write(sendList)
 				return
 			}
 			go stream.Play(streamPath)
 			<-r.Context().Done()
+			Println("cancel listenInfo")
 			stream.Cancel()
 		} else {
-			w.Write([]byte("no query stream"))
+			w.Write([]byte("no such stream"))
 		}
 	} else {
-		w.Write([]byte("no such stream"))
+		w.Write([]byte("no query stream"))
 	}
 
+}
+
+type SnapShot struct {
+	Type      byte
+	Timestamp uint32
+	Payload   []byte
+}
+
+func snapshot(w http.ResponseWriter, r *http.Request) {
+	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
+		if b, ok := AllRoom.Load(streamPath); ok {
+			room := b.(*Room)
+			output := make([]*SnapShot, RING_SIZE)
+			p := room.AVRing.Clone()
+
+			for i := 0; i < RING_SIZE; i++ {
+				output[i] = &SnapShot{
+					Type:      p.Type,
+					Timestamp: p.Timestamp,
+				}
+				if len(p.Payload) < 10 {
+					output[i].Payload = p.Payload
+				} else {
+					output[i].Payload = p.Payload[:10]
+				}
+				p.GoBack()
+			}
+			if bytes, err := json.Marshal(output); err == nil {
+				_, err = w.Write(bytes)
+			}
+		} else {
+			w.Write([]byte("no such stream"))
+		}
+	} else {
+		w.Write([]byte("no query stream"))
+	}
 }
