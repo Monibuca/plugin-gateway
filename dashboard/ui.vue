@@ -38,8 +38,11 @@
         <mu-data-table v-else :columns="columns" :data="$store.state.Rooms" :min-col-width="50">
             <template slot="expand" slot-scope="prop">
                 <div>
-                    <mu-button flat @click="showCircle(prop.row)">查看缓冲环</mu-button>
-                    <mu-button flat @click="snapshot(prop.row)">查看缓冲快照</mu-button>
+                    <span>查看：</span>
+                    <mu-button flat @click="showCircle(prop.row)">缓冲环</mu-button>
+                    <mu-button flat @click="snapshot(prop.row)">缓冲快照</mu-button>
+                    <mu-button flat @click="videoTag(prop.row)">VideoTag</mu-button>
+                    <mu-button flat @click="audioTag(prop.row)">AudioTag</mu-button>
                 </div>
             </template>
             <template slot-scope="scope">
@@ -77,10 +80,12 @@
                         <feMergeNode in="SourceGraphic" />
                     </feMerge>
                 </filter>
-                <circle r="5" cx="100" cy="130" fill="yellow" />
-                <text x="120" y="135" fill="white">publisher</text>
-                <circle r="5" cx="100" cy="145" fill="tomato" />
-                <text x="120" y="150" fill="white">subscriber</text>
+                <circle r="5" cx="100" cy="115" fill="yellow" />
+                <text x="120" y="120" fill="white">publisher</text>
+                <circle r="5" cx="100" cy="130" fill="tomato" />
+                <text x="120" y="135" fill="white">subscriber</text>
+                <circle r="5" cx="100" cy="145" fill="blue" />
+                <text x="120" y="150" fill="white">keyframe</text>
                 <a @click="showSlider"><text x="90" y="175" fill="wheat">最大显示个数：{{maxSubDetail}}</text></a>
                 <circle stroke-dasharray="10,2" cx="140" cy="140" :r="ringR" stroke="cyan" stroke-width="4" fill="none"
                     filter="url(#track)" />
@@ -88,7 +93,7 @@
                     <circle :key="i" fill="tomato" r="5" :cx="Math.sin((pubIndex-n)*Math.PI/ringR)*subR+140"
                         :cy="Math.cos((pubIndex-n)*Math.PI/ringR)*subR+140" />
                 </template>
-                <circle fill="cyan" r="4" :cx="Math.sin(firstIndex*Math.PI/ringR)*ringR+140"
+                <circle fill="blue" r="5" :cx="Math.sin(firstIndex*Math.PI/ringR)*ringR+140"
                     :cy="Math.cos(firstIndex*Math.PI/ringR)*ringR+140" />
                 <circle fill="yellow" r="5" :cx="Math.sin(pubIndex*Math.PI/ringR)*pubR+140"
                     :cy="Math.cos(pubIndex*Math.PI/ringR)*pubR+140" />
@@ -98,11 +103,18 @@
                 <div v-for="n in 256" :key="n" :style="{top:(Math.cos(n*Math.PI*2/256)*128+128)+'px',left:(Math.sin(n*Math.PI*2/256)*128+128)+'px'}" :class="currentRoomInfo ? n==currentRoomInfo[0]?'publisher':currentRoomInfo.indexOf(currentRoomInfo[0]-n)!=-1?'subscriber':'':''">●</div>
             </div> -->
         </mu-dialog>
-        <mu-dialog width="500" transition="slide-top" :open.sync="showSnapshot">
+        <mu-dialog width="550" transition="slide-top" :open.sync="showSnapshot">
             <div>缓冲快照</div>
-            <mu-dialog :columns="snapshotColumns" :data="snapshotData">
-
-            </mu-dialog>
+            <mu-data-table :columns="snapshotColumns"
+                :data="snapshotData.slice(currentSnapshotPage*10,currentSnapshotPage*10+10)">
+                <mu-pagination slot="footer" :total="snapshotData.length" :current.sync="currentSnapshotPage">
+                </mu-pagination>
+            </mu-data-table>
+        </mu-dialog>
+        <mu-dialog width="550" transition="slide-top" :open.sync="showTag">
+            <pre>
+                {{tagData}}
+            </pre>
         </mu-dialog>
     </div>
 </template>
@@ -125,15 +137,19 @@ export default {
             pubIndex: 0,
             firstIndex: 0,
             currentRoomInfo: [],
+            currentSnapshotPage: 0,
+            showTag: false,
+            tagData: "",
             snapshotColumns: [
                 {
                     title: "类型",
                     name: "Type",
                     formatter(value) {
                         return value == 8 ? "Audio" : "Video";
-                    }
+                    },
+                    width: 100
                 },
-                { title: "时间戳", name: "Timestamp" },
+                { title: "时间戳", name: "Timestamp", width: 120 },
                 {
                     title: "内容",
                     name: "Payload",
@@ -224,14 +240,14 @@ export default {
                     this.maxSubDetail
             );
             es.onmessage = evt => {
-                const data = evt.data;
-                console.log(btoa(data));
-                for (let i = 0; i < data.length; i++) {
-                    console.log(i, data.charCodeAt(i));
-                }
-                // this.pubIndex = data[0];
-                // this.firstIndex = data[1];
-                // this.currentRoomInfo = data.slice(2);
+                let data = JSON.parse(evt.data);
+                data = atob(data);
+                this.pubIndex = data.charCodeAt(0);
+                this.firstIndex = data.charCodeAt(1);
+                this.currentRoomInfo = data
+                    .split("")
+                    .slice(2)
+                    .map(x => x.charCodeAt(0));
             };
         },
         showSlider() {
@@ -266,6 +282,40 @@ export default {
                 .then(data => {
                     this.snapshotData = data;
                 });
+        },
+        audioTag(row) {
+            this.showTag = true;
+            this.currentRoom = row;
+            this.ajax.get(
+                "/api/tagRaw?stream=" + this.currentRoom.StreamPath + "&t=a",
+                data => {
+                    for (let j = 0; j < data.length; this.tagData += "\n") {
+                        for (let i = 0; i < 16 && j < data.length; i++, j++) {
+                            let x = data[j].toString(16);
+                            if (x.length == 1) x = "0" + x;
+                            this.tagData += " " + x;
+                        }
+                    }
+                },
+                "arraybuffer"
+            );
+        },
+        videoTag(row) {
+            this.showTag = true;
+            this.currentRoom = row;
+            this.ajax.get(
+                "/api/tagRaw?stream=" + this.currentRoom.StreamPath + "&t=v",
+                data => {
+                    for (let j = 0; j < data.length; this.tagData += "\n") {
+                        for (let i = 0; i < 16 && j < data.length; i++, j++) {
+                            let x = data[j].toString(16);
+                            if (x.length == 1) x = "0" + x;
+                            this.tagData += " " + x;
+                        }
+                    }
+                },
+                "arraybuffer"
+            );
         }
     },
     mounted() {

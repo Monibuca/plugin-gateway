@@ -31,7 +31,8 @@
             json: jsonType,
             xml: 'application/xml, text/xml',
             html: htmlType,
-            text: 'text/plain'
+            text: 'text/plain',
+            arraybuffer: "text/plain; charset=x-user-defined"
         },
 
         crossDomain: false,
@@ -165,6 +166,8 @@
                         // json
                         else if (dataType === 'json') {
                             result = blankRE.test(result) ? null : JSON.parse(result);
+                        } else if (dataType === "arraybuffer") {
+                            result = xhr.response;
                         }
                     }
                     catch (e) {
@@ -234,7 +237,7 @@
 
         // send
         xhr.send(settings.data ? settings.data : null);
-        settings.promise.abort = function(){
+        settings.promise.abort = function () {
             xhr.abort()
         }
         return settings.promise;
@@ -359,7 +362,7 @@
             }
         };
 
-        var xhr = {abort: abort};
+        var xhr = { abort: abort };
         var abortTimeout;
 
         var head = window.document.getElementsByTagName('head')[0] || window.document.documentElement;
@@ -494,7 +497,7 @@
         //
         for (var i = 0, length = args.length; i < length; i++) {
             var source = args[i] || {};
-            for (var key in  source) {
+            for (var key in source) {
                 if (source.hasOwnProperty(key) && source[key] !== undefined) {
                     target[key] = source[key];
                 }

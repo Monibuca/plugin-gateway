@@ -44,6 +44,7 @@ func run() {
 	http.HandleFunc("/api/plugins", getPlugins)
 	http.HandleFunc("/api/listenInfo", listenInfo)
 	http.HandleFunc("/api/snapshot", snapshot)
+	http.HandleFunc("/api/tagRaw", tagRaw)
 	http.HandleFunc("/plugin/", getPluginUI)
 	http.HandleFunc("/", website)
 	Print(Green("server gateway start at "), BrightBlue(config.ListenAddr))
@@ -193,7 +194,7 @@ func listenInfo(w http.ResponseWriter, r *http.Request) {
 				for i := 0; i < maxSub && i < len(room.SubscriberInfo); i++ {
 					sendList[i+2] = room.SubscriberInfo[i].BufferLength
 				}
-				_, err = sse.Write(sendList)
+				err = sse.WriteJSON(sendList)
 				return
 			}
 			go stream.Play(streamPath)
@@ -236,6 +237,31 @@ func snapshot(w http.ResponseWriter, r *http.Request) {
 			}
 			if bytes, err := json.Marshal(output); err == nil {
 				_, err = w.Write(bytes)
+			}
+		} else {
+			w.Write([]byte("no such stream"))
+		}
+	} else {
+		w.Write([]byte("no query stream"))
+	}
+}
+func tagRaw(w http.ResponseWriter, r *http.Request) {
+	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
+		if b, ok := AllRoom.Load(streamPath); ok {
+			room := b.(*Room)
+			t := r.URL.Query().Get("t")
+			if t == "a" {
+				if room.AudioTag == nil {
+					w.Write([]byte("no audio tag"))
+					return
+				}
+				w.Write(room.AudioTag.Payload)
+			} else {
+				if room.VideoTag == nil {
+					w.Write([]byte("no video tag"))
+					return
+				}
+				w.Write(room.VideoTag.Payload)
 			}
 		} else {
 			w.Write([]byte("no such stream"))

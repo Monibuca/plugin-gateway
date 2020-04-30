@@ -3858,12 +3858,12 @@ if (typeof window !== 'undefined') {
 // Indicate to webpack that this file can be concatenated
 /* harmony default export */ var setPublicPath = (null);
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"0ba24d02-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./ui.vue?vue&type=template&id=66156049&
-var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[(_vm.active1===0)?_c('div',[_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.Memory.Usage,"stroke-color":['#c52dd0','#40d3fc'],"trail-color":"#000000"}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.unitFormat(_vm.Memory.Used,"M")))]),_c('p',[_vm._v("内存使用")]),_c('span',[_vm._v(" 占总内存 "),_c('i',[_vm._v(_vm._s(_vm.Memory.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.HardDisk.Usage,"stroke-color":['#c52dd0','#40d3fc'],"trail-color":"#000000"}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.unitFormat(_vm.HardDisk.Used,"M")))]),_c('p',[_vm._v("硬盘使用")]),_c('span',[_vm._v(" 占总硬盘 "),_c('i',[_vm._v(_vm._s(_vm.HardDisk.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"percent":_vm.CPUUsage,"dashboard":"","trail-color":"#000000","stroke-color":['#c52dd0','#40d3fc']}},[_c('p',[_vm._v("CPU使用率")]),_c('span',{staticStyle:{"font-size":"24px"}},[_vm._v(_vm._s(_vm.CPUUsage.toFixed(2))+"%")])]),_c('mu-data-table',{attrs:{"columns":_vm.netWorkColumns,"data":_vm.NetWork},scopedSlots:_vm._u([{key:"default",fn:function(scope){return [_c('td',[_vm._v(_vm._s(scope.row.Name))]),_c('td',[_vm._v(_vm._s(_vm.unitFormat(scope.row.ReceiveSpeed) + "/S"))]),_c('td',[_vm._v(_vm._s(_vm.unitFormat(scope.row.SentSpeed) + "/S"))])]}}],null,false,1212955354)})],1):_c('mu-data-table',{attrs:{"columns":_vm.columns,"data":_vm.$store.state.Rooms,"min-col-width":50},scopedSlots:_vm._u([{key:"expand",fn:function(prop){return [_c('div',[_c('mu-button',{attrs:{"flat":""},on:{"click":function($event){return _vm.showCircle(prop.row)}}},[_vm._v("查看缓冲环")]),_c('mu-button',{attrs:{"flat":""},on:{"click":function($event){return _vm.snapshot(prop.row)}}},[_vm._v("查看缓冲快照")])],1)]}},{key:"default",fn:function(scope){return [_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.StreamPath))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.Type||"await"))]),_c('td',{staticClass:"is-center"},[_c('StartTime',{attrs:{"value":scope.row.StartTime}})],1),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.SoundFormat(scope.row.AudioInfo.SoundFormat)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.SoundRate(scope.row.AudioInfo.SoundRate)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.AudioInfo.SoundType))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.CodecID(scope.row.VideoInfo.CodecID)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.VideoInfo.SPSInfo.Width)+"x"+_vm._s(scope.row.VideoInfo.SPSInfo.Height)+" ")]),_c('td',{staticClass:"is-center"},[_vm._v(" "+_vm._s(_vm.unitFormat(scope.row.AudioInfo.BPS))+"/"+_vm._s(_vm.unitFormat(scope.row.VideoInfo.BPS))+" ")]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.SubscriberInfo.length))])]}}])}),_c('mu-dialog',{attrs:{"width":"330","transition":"slide-top","open":_vm.showDetail},on:{"close":_vm.onCloseDetail,"update:open":function($event){_vm.showDetail=$event}}},[_c('div',[_vm._v("实时缓冲读写环")]),_c('svg',{attrs:{"xmlns":"http://www.w3.org/2000/svg","version":"1.1","width":"330","height":"330"}},[_c('filter',{attrs:{"id":"track"}},[_c('feColorMatrix',{attrs:{"type":"matrix","result":"color","values":"\n                0 0 0 0  0\n                0 0 0 .9 0\n                0 0 0 .9 0\n                0 0 0 1  0\n                "}}),_c('feGaussianBlur',{attrs:{"in":"color","stdDeviation":"4","result":"blur"}}),_c('feOffset',{attrs:{"in":"blur","dx":"0","dy":"0","result":"offset"}}),_c('feMerge',[_c('feMergeNode',{attrs:{"in":"offset"}}),_c('feMergeNode',{attrs:{"in":"SourceGraphic"}})],1)],1),_c('circle',{attrs:{"r":"5","cx":"100","cy":"130","fill":"yellow"}}),_c('text',{attrs:{"x":"120","y":"135","fill":"white"}},[_vm._v("publisher")]),_c('circle',{attrs:{"r":"5","cx":"100","cy":"145","fill":"tomato"}}),_c('text',{attrs:{"x":"120","y":"150","fill":"white"}},[_vm._v("subscriber")]),_c('a',{on:{"click":_vm.showSlider}},[_c('text',{attrs:{"x":"90","y":"175","fill":"wheat"}},[_vm._v("最大显示个数："+_vm._s(_vm.maxSubDetail))])]),_c('circle',{attrs:{"stroke-dasharray":"10,2","cx":"140","cy":"140","r":_vm.ringR,"stroke":"cyan","stroke-width":"4","fill":"none","filter":"url(#track)"}}),_vm._l((_vm.currentRoomInfo),function(n,i){return [_c('circle',{key:i,attrs:{"fill":"tomato","r":"5","cx":Math.sin((_vm.pubIndex-n)*Math.PI/_vm.ringR)*_vm.subR+140,"cy":Math.cos((_vm.pubIndex-n)*Math.PI/_vm.ringR)*_vm.subR+140}})]}),_c('circle',{attrs:{"fill":"cyan","r":"4","cx":Math.sin(_vm.firstIndex*Math.PI/_vm.ringR)*_vm.ringR+140,"cy":Math.cos(_vm.firstIndex*Math.PI/_vm.ringR)*_vm.ringR+140}}),_c('circle',{attrs:{"fill":"yellow","r":"5","cx":Math.sin(_vm.pubIndex*Math.PI/_vm.ringR)*_vm.pubR+140,"cy":Math.cos(_vm.pubIndex*Math.PI/_vm.ringR)*_vm.pubR+140}})],2)]),_c('mu-dialog',{attrs:{"width":"500","transition":"slide-top","open":_vm.showSnapshot},on:{"update:open":function($event){_vm.showSnapshot=$event}}},[_c('div',[_vm._v("缓冲快照")]),_c('mu-dialog',{attrs:{"columns":_vm.snapshotColumns,"data":_vm.snapshotData}})],1)],1)}
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"0ba24d02-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./ui.vue?vue&type=template&id=e28d3d2e&
+var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[(_vm.active1===0)?_c('div',[_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.Memory.Usage,"stroke-color":['#c52dd0','#40d3fc'],"trail-color":"#000000"}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.unitFormat(_vm.Memory.Used,"M")))]),_c('p',[_vm._v("内存使用")]),_c('span',[_vm._v(" 占总内存 "),_c('i',[_vm._v(_vm._s(_vm.Memory.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"dashboard":"","size":250,"trail-width":4,"stroke-width":5,"percent":_vm.HardDisk.Usage,"stroke-color":['#c52dd0','#40d3fc'],"trail-color":"#000000"}},[_c('div',{staticClass:"demo-Circle-custom"},[_c('h1',[_vm._v(_vm._s(_vm.unitFormat(_vm.HardDisk.Used,"M")))]),_c('p',[_vm._v("硬盘使用")]),_c('span',[_vm._v(" 占总硬盘 "),_c('i',[_vm._v(_vm._s(_vm.HardDisk.Usage.toFixed(2))+"%")])])])]),_c('i-circle',{attrs:{"percent":_vm.CPUUsage,"dashboard":"","trail-color":"#000000","stroke-color":['#c52dd0','#40d3fc']}},[_c('p',[_vm._v("CPU使用率")]),_c('span',{staticStyle:{"font-size":"24px"}},[_vm._v(_vm._s(_vm.CPUUsage.toFixed(2))+"%")])]),_c('mu-data-table',{attrs:{"columns":_vm.netWorkColumns,"data":_vm.NetWork},scopedSlots:_vm._u([{key:"default",fn:function(scope){return [_c('td',[_vm._v(_vm._s(scope.row.Name))]),_c('td',[_vm._v(_vm._s(_vm.unitFormat(scope.row.ReceiveSpeed) + "/S"))]),_c('td',[_vm._v(_vm._s(_vm.unitFormat(scope.row.SentSpeed) + "/S"))])]}}],null,false,1212955354)})],1):_c('mu-data-table',{attrs:{"columns":_vm.columns,"data":_vm.$store.state.Rooms,"min-col-width":50},scopedSlots:_vm._u([{key:"expand",fn:function(prop){return [_c('div',[_c('span',[_vm._v("查看：")]),_c('mu-button',{attrs:{"flat":""},on:{"click":function($event){return _vm.showCircle(prop.row)}}},[_vm._v("缓冲环")]),_c('mu-button',{attrs:{"flat":""},on:{"click":function($event){return _vm.snapshot(prop.row)}}},[_vm._v("缓冲快照")]),_c('mu-button',{attrs:{"flat":""},on:{"click":function($event){return _vm.videoTag(prop.row)}}},[_vm._v("VideoTag")]),_c('mu-button',{attrs:{"flat":""},on:{"click":function($event){return _vm.audioTag(prop.row)}}},[_vm._v("AudioTag")])],1)]}},{key:"default",fn:function(scope){return [_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.StreamPath))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.Type||"await"))]),_c('td',{staticClass:"is-center"},[_c('StartTime',{attrs:{"value":scope.row.StartTime}})],1),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.SoundFormat(scope.row.AudioInfo.SoundFormat)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.SoundRate(scope.row.AudioInfo.SoundRate)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.AudioInfo.SoundType))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(_vm.CodecID(scope.row.VideoInfo.CodecID)))]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.VideoInfo.SPSInfo.Width)+"x"+_vm._s(scope.row.VideoInfo.SPSInfo.Height)+" ")]),_c('td',{staticClass:"is-center"},[_vm._v(" "+_vm._s(_vm.unitFormat(scope.row.AudioInfo.BPS))+"/"+_vm._s(_vm.unitFormat(scope.row.VideoInfo.BPS))+" ")]),_c('td',{staticClass:"is-center"},[_vm._v(_vm._s(scope.row.SubscriberInfo.length))])]}}])}),_c('mu-dialog',{attrs:{"width":"330","transition":"slide-top","open":_vm.showDetail},on:{"close":_vm.onCloseDetail,"update:open":function($event){_vm.showDetail=$event}}},[_c('div',[_vm._v("实时缓冲读写环")]),_c('svg',{attrs:{"xmlns":"http://www.w3.org/2000/svg","version":"1.1","width":"330","height":"330"}},[_c('filter',{attrs:{"id":"track"}},[_c('feColorMatrix',{attrs:{"type":"matrix","result":"color","values":"\n                0 0 0 0  0\n                0 0 0 .9 0\n                0 0 0 .9 0\n                0 0 0 1  0\n                "}}),_c('feGaussianBlur',{attrs:{"in":"color","stdDeviation":"4","result":"blur"}}),_c('feOffset',{attrs:{"in":"blur","dx":"0","dy":"0","result":"offset"}}),_c('feMerge',[_c('feMergeNode',{attrs:{"in":"offset"}}),_c('feMergeNode',{attrs:{"in":"SourceGraphic"}})],1)],1),_c('circle',{attrs:{"r":"5","cx":"100","cy":"115","fill":"yellow"}}),_c('text',{attrs:{"x":"120","y":"120","fill":"white"}},[_vm._v("publisher")]),_c('circle',{attrs:{"r":"5","cx":"100","cy":"130","fill":"tomato"}}),_c('text',{attrs:{"x":"120","y":"135","fill":"white"}},[_vm._v("subscriber")]),_c('circle',{attrs:{"r":"5","cx":"100","cy":"145","fill":"blue"}}),_c('text',{attrs:{"x":"120","y":"150","fill":"white"}},[_vm._v("keyframe")]),_c('a',{on:{"click":_vm.showSlider}},[_c('text',{attrs:{"x":"90","y":"175","fill":"wheat"}},[_vm._v("最大显示个数："+_vm._s(_vm.maxSubDetail))])]),_c('circle',{attrs:{"stroke-dasharray":"10,2","cx":"140","cy":"140","r":_vm.ringR,"stroke":"cyan","stroke-width":"4","fill":"none","filter":"url(#track)"}}),_vm._l((_vm.currentRoomInfo),function(n,i){return [_c('circle',{key:i,attrs:{"fill":"tomato","r":"5","cx":Math.sin((_vm.pubIndex-n)*Math.PI/_vm.ringR)*_vm.subR+140,"cy":Math.cos((_vm.pubIndex-n)*Math.PI/_vm.ringR)*_vm.subR+140}})]}),_c('circle',{attrs:{"fill":"blue","r":"5","cx":Math.sin(_vm.firstIndex*Math.PI/_vm.ringR)*_vm.ringR+140,"cy":Math.cos(_vm.firstIndex*Math.PI/_vm.ringR)*_vm.ringR+140}}),_c('circle',{attrs:{"fill":"yellow","r":"5","cx":Math.sin(_vm.pubIndex*Math.PI/_vm.ringR)*_vm.pubR+140,"cy":Math.cos(_vm.pubIndex*Math.PI/_vm.ringR)*_vm.pubR+140}})],2)]),_c('mu-dialog',{attrs:{"width":"550","transition":"slide-top","open":_vm.showSnapshot},on:{"update:open":function($event){_vm.showSnapshot=$event}}},[_c('div',[_vm._v("缓冲快照")]),_c('mu-data-table',{attrs:{"columns":_vm.snapshotColumns,"data":_vm.snapshotData.slice(_vm.currentSnapshotPage*10,_vm.currentSnapshotPage*10+10)}},[_c('mu-pagination',{attrs:{"slot":"footer","total":_vm.snapshotData.length,"current":_vm.currentSnapshotPage},on:{"update:current":function($event){_vm.currentSnapshotPage=$event}},slot:"footer"})],1)],1),_c('mu-dialog',{attrs:{"width":"550","transition":"slide-top","open":_vm.showTag},on:{"update:open":function($event){_vm.showTag=$event}}},[_c('pre',[_vm._v("            "+_vm._s(_vm.tagData)+"\n        ")])])],1)}
 var staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./ui.vue?vue&type=template&id=66156049&
+// CONCATENATED MODULE: ./ui.vue?vue&type=template&id=e28d3d2e&
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.array.join.js
 var es_array_join = __webpack_require__("a15b");
@@ -3873,6 +3873,9 @@ var es_array_map = __webpack_require__("d81d");
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.array.reduce.js
 var es_array_reduce = __webpack_require__("13d5");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.array.slice.js
+var es_array_slice = __webpack_require__("fb6a");
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.object.to-string.js
 var es_object_to_string = __webpack_require__("d3b7");
@@ -3977,6 +3980,19 @@ var vuex_esm = __webpack_require__("2f62");
 
 
 
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -4103,15 +4119,20 @@ var es = null;
       pubIndex: 0,
       firstIndex: 0,
       currentRoomInfo: [],
+      currentSnapshotPage: 0,
+      showTag: false,
+      tagData: "",
       snapshotColumns: [{
         title: "类型",
         name: "Type",
         formatter: function formatter(value) {
           return value == 8 ? "Audio" : "Video";
-        }
+        },
+        width: 100
       }, {
         title: "时间戳",
-        name: "Timestamp"
+        name: "Timestamp",
+        width: 120
       }, {
         title: "内容",
         name: "Payload",
@@ -4180,34 +4201,34 @@ var es = null;
       es.close();
     },
     startListen: function startListen() {
+      var _this2 = this;
+
       es = new EventSource("/api/listenInfo?stream=" + this.currentRoom.StreamPath + "&max=" + this.maxSubDetail);
 
       es.onmessage = function (evt) {
-        var data = evt.data;
-        console.log(btoa(data));
-
-        for (var i = 0; i < data.length; i++) {
-          console.log(i, data.charCodeAt(i));
-        } // this.pubIndex = data[0];
-        // this.firstIndex = data[1];
-        // this.currentRoomInfo = data.slice(2);
-
+        var data = JSON.parse(evt.data);
+        data = atob(data);
+        _this2.pubIndex = data.charCodeAt(0);
+        _this2.firstIndex = data.charCodeAt(1);
+        _this2.currentRoomInfo = data.split("").slice(2).map(function (x) {
+          return x.charCodeAt(0);
+        });
       };
     },
     showSlider: function showSlider() {
-      var _this2 = this;
+      var _this3 = this;
 
       this.$confirm(function (h) {
         return h("mu-slider", {
           props: {
-            value: _this2.maxSubDetail,
-            max: _this2.currentRoomInfo.length,
+            value: _this3.maxSubDetail,
+            max: _this3.currentRoomInfo.length,
             min: 1,
             step: 1
           },
           on: {
             change: function change(v) {
-              _this2.maxSubDetail = v;
+              _this3.maxSubDetail = v;
             }
           }
         });
@@ -4217,18 +4238,48 @@ var es = null;
         if (result) {
           es.close();
 
-          _this2.startListen();
+          _this3.startListen();
         }
       });
     },
     snapshot: function snapshot(row) {
-      var _this3 = this;
+      var _this4 = this;
 
       this.showSnapshot = true;
       this.currentRoom = row;
       this.ajax.getJSON("/api/snapshot?stream=" + this.currentRoom.StreamPath).then(function (data) {
-        _this3.snapshotData = data;
+        _this4.snapshotData = data;
       });
+    },
+    audioTag: function audioTag(row) {
+      var _this5 = this;
+
+      this.showTag = true;
+      this.currentRoom = row;
+      this.ajax.get("/api/tagRaw?stream=" + this.currentRoom.StreamPath + "&t=a", function (data) {
+        for (var j = 0; j < data.length; _this5.tagData += "\n") {
+          for (var i = 0; i < 16 && j < data.length; i++, j++) {
+            var x = data[j].toString(16);
+            if (x.length == 1) x = "0" + x;
+            _this5.tagData += " " + x;
+          }
+        }
+      }, "arraybuffer");
+    },
+    videoTag: function videoTag(row) {
+      var _this6 = this;
+
+      this.showTag = true;
+      this.currentRoom = row;
+      this.ajax.get("/api/tagRaw?stream=" + this.currentRoom.StreamPath + "&t=v", function (data) {
+        for (var j = 0; j < data.length; _this6.tagData += "\n") {
+          for (var i = 0; i < 16 && j < data.length; i++, j++) {
+            var x = data[j].toString(16);
+            if (x.length == 1) x = "0" + x;
+            _this6.tagData += " " + x;
+          }
+        }
+      }, "arraybuffer");
     }
   },
   mounted: function mounted() {
@@ -4390,6 +4441,63 @@ var component = normalizeComponent(
 
 /* harmony default export */ var entry_lib = __webpack_exports__["default"] = (ui);
 
+
+
+/***/ }),
+
+/***/ "fb6a":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__("23e7");
+var isObject = __webpack_require__("861d");
+var isArray = __webpack_require__("e8b5");
+var toAbsoluteIndex = __webpack_require__("23cb");
+var toLength = __webpack_require__("50c4");
+var toIndexedObject = __webpack_require__("fc6a");
+var createProperty = __webpack_require__("8418");
+var wellKnownSymbol = __webpack_require__("b622");
+var arrayMethodHasSpeciesSupport = __webpack_require__("1dde");
+var arrayMethodUsesToLength = __webpack_require__("ae40");
+
+var HAS_SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('slice');
+var USES_TO_LENGTH = arrayMethodUsesToLength('slice', { ACCESSORS: true, 0: 0, 1: 2 });
+
+var SPECIES = wellKnownSymbol('species');
+var nativeSlice = [].slice;
+var max = Math.max;
+
+// `Array.prototype.slice` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.slice
+// fallback for not array-like ES3 strings and DOM objects
+$({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGTH }, {
+  slice: function slice(start, end) {
+    var O = toIndexedObject(this);
+    var length = toLength(O.length);
+    var k = toAbsoluteIndex(start, length);
+    var fin = toAbsoluteIndex(end === undefined ? length : end, length);
+    // inline `ArraySpeciesCreate` for usage native `Array#slice` where it's possible
+    var Constructor, result, n;
+    if (isArray(O)) {
+      Constructor = O.constructor;
+      // cross-realm fallback
+      if (typeof Constructor == 'function' && (Constructor === Array || isArray(Constructor.prototype))) {
+        Constructor = undefined;
+      } else if (isObject(Constructor)) {
+        Constructor = Constructor[SPECIES];
+        if (Constructor === null) Constructor = undefined;
+      }
+      if (Constructor === Array || Constructor === undefined) {
+        return nativeSlice.call(O, k, fin);
+      }
+    }
+    result = new (Constructor === undefined ? Array : Constructor)(max(fin - k, 0));
+    for (n = 0; k < fin; k++, n++) if (k in O) createProperty(result, n, O[k]);
+    result.length = n;
+    return result;
+  }
+});
 
 
 /***/ }),
