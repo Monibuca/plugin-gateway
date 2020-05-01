@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	. "github.com/Monibuca/engine"
-	"github.com/Monibuca/engine/avformat"
-	. "github.com/Monibuca/engine/util"
+	. "github.com/Monibuca/engine/v2"
+	"github.com/Monibuca/engine/v2/avformat"
+	. "github.com/Monibuca/engine/v2/util"
 	. "github.com/logrusorgru/aurora"
 )
 
@@ -58,14 +58,14 @@ func getConfig(w http.ResponseWriter, r *http.Request) {
 func stopPublish(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
-		if b, ok := AllRoom.Load(streamPath); ok {
-			b.(*Room).Cancel()
+		if s := FindStream(streamPath); s!=nil {
+			s.Cancel()
 			w.Write([]byte("success"))
 		} else {
-			w.Write([]byte("no query stream"))
+			w.Write([]byte("no such stream"))
 		}
 	} else {
-		w.Write([]byte("no such stream"))
+		w.Write([]byte("no query stream"))
 	}
 }
 func website(w http.ResponseWriter, r *http.Request) {
@@ -175,32 +175,30 @@ func listenInfo(w http.ResponseWriter, r *http.Request) {
 		if max := r.URL.Query().Get("max"); max != "" {
 			maxSub, _ = strconv.Atoi(max)
 		}
-		if b, ok := AllRoom.Load(streamPath); ok {
-			room := b.(*Room)
-
+		if stream := FindStream(streamPath); stream!=nil {
 			sse := NewSSE(w, r.Context())
-			stream := new(OutputStream)
-			stream.Type = "GateWay"
-			stream.ID = r.RemoteAddr
-			stream.SendHandler = func(packet *avformat.SendPacket) (err error) {
+			sub := new(Subscriber)
+			sub.Type = "GateWay"
+			sub.ID = r.RemoteAddr
+			sub.OnData = func(packet *avformat.SendPacket) (err error) {
 				l := maxSub
-				if l > len(room.SubscriberInfo) {
-					l = len(room.SubscriberInfo)
+				if l > len(stream.SubscriberInfo) {
+					l = len(stream.SubscriberInfo)
 				}
 				l += 2
 				sendList := make([]byte, l)
-				sendList[0] = room.AVRing.Index
-				sendList[1] = room.FirstScreen.Index
-				for i := 0; i < maxSub && i < len(room.SubscriberInfo); i++ {
-					sendList[i+2] = room.SubscriberInfo[i].BufferLength
+				sendList[0] = stream.AVRing.Index
+				sendList[1] = stream.FirstScreen.Index
+				for i := 0; i < maxSub && i < len(stream.SubscriberInfo); i++ {
+					sendList[i+2] = stream.SubscriberInfo[i].BufferLength
 				}
 				err = sse.WriteJSON(sendList)
 				return
 			}
-			go stream.Play(streamPath)
+			go sub.Subscribe(streamPath)
 			<-r.Context().Done()
 			Println("cancel listenInfo")
-			stream.Cancel()
+			sub.Cancel()
 		} else {
 			w.Write([]byte("no such stream"))
 		}
@@ -218,10 +216,9 @@ type SnapShot struct {
 
 func snapshot(w http.ResponseWriter, r *http.Request) {
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
-		if b, ok := AllRoom.Load(streamPath); ok {
-			room := b.(*Room)
+		if stream:=FindStream(streamPath); stream!=nil {
 			output := make([]*SnapShot, RING_SIZE)
-			p := room.AVRing.Clone()
+			p := stream.AVRing.Clone()
 
 			for i := 0; i < RING_SIZE; i++ {
 				output[i] = &SnapShot{
@@ -247,21 +244,20 @@ func snapshot(w http.ResponseWriter, r *http.Request) {
 }
 func tagRaw(w http.ResponseWriter, r *http.Request) {
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
-		if b, ok := AllRoom.Load(streamPath); ok {
-			room := b.(*Room)
+		if stream:=FindStream(streamPath); stream!=nil {
 			t := r.URL.Query().Get("t")
 			if t == "a" {
-				if room.AudioTag == nil {
+				if stream.AudioTag == nil {
 					w.Write([]byte("no audio tag"))
 					return
 				}
-				w.Write(room.AudioTag.Payload)
+				w.Write(stream.AudioTag.Payload)
 			} else {
-				if room.VideoTag == nil {
+				if stream.VideoTag == nil {
 					w.Write([]byte("no video tag"))
 					return
 				}
-				w.Write(room.VideoTag.Payload)
+				w.Write(stream.VideoTag.Payload)
 			}
 		} else {
 			w.Write([]byte("no such stream"))

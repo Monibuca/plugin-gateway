@@ -57,6 +57,7 @@
                 <td class="is-center">{{CodecID(scope.row.VideoInfo.CodecID)}}</td>
                 <td class="is-center">{{scope.row.VideoInfo.SPSInfo.Width}}x{{scope.row.VideoInfo.SPSInfo.Height}}
                 </td>
+                <td class="is-center">{{scope.row.VideoInfo.GOP}}</td>
                 <td class="is-center">
                     {{unitFormat(scope.row.AudioInfo.BPS)}}/{{unitFormat(scope.row.VideoInfo.BPS)}}
                 </td>
@@ -210,6 +211,10 @@ export default {
                     align: "center"
                 },
                 {
+                    title:"GOP",
+                    align:"center"
+                },
+                {
                     title: "码率A/V",
                     align: "center"
                 },
@@ -342,7 +347,7 @@ export default {
         ...mapState([
             "Address",
             "NetWork",
-            "Rooms",
+            "Streams",
             "Memory",
             "CPUUsage",
             "HardDisk",
