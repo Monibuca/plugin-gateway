@@ -9,18 +9,24 @@
                 <mu-button icon color="primary" @click="showSettings">
                     <mu-icon value="settings"></mu-icon>
                 </mu-button>
-                <component :is="pluginAppbar" v-if="pluginAppbar"></component>
+                <m-button
+                    v-for="op in titleOps"
+                    :key="op.label"
+                    v-bind="op"
+                >{{op.label}}</m-button>
+                <mu-tabs v-if="titleTabs.length" :value.sync="titleTabActive" indicator-color="#80deea" inverse center>
+                    <mu-tab v-for="op in titleTabs" :key="op">{{op}}</mu-tab>
+                </mu-tabs>
             </div>
-            <!-- <mu-button flat v-for="item in menus" :key="item.label" color="primary" @click="item.action()">
-                {{item.label}}
-            </mu-button> -->
             <div slot="right">
-                启动时间： <StartTime :value="engineInfo.StartTime"></StartTime>
+                启动时间：
+                <StartTime :value="engineInfo.StartTime"></StartTime>
             </div>
         </mu-appbar>
         <mu-drawer open width="200">
             <mu-appbar :z-depth="0">
-                <div style="line-height:24px"><img src="favicon.ico" width="24" style="vertical-align: top;">onibuca
+                <div style="line-height:24px">
+                    <img src="favicon.ico" width="24" style="vertical-align: top;" />onibuca
                 </div>
                 <div style="font-size:10px;line-height:24px">engine: {{engineInfo.Version}}</div>
             </mu-appbar>
@@ -35,7 +41,11 @@
             </mu-list>
         </mu-drawer>
         <div style="padding:100px 20px 20px 220px">
-            <vue-markdown style="padding: 24px;" :source="currentPluginData.ReadMe" v-if="!currentPluginData.UIDir" />
+            <vue-markdown
+                style="padding: 24px;"
+                :source="currentPluginData.ReadMe"
+                v-if="!currentPluginData.UIDir"
+            />
             <component v-else ref="plugin" :is="currentPlugin" v-bind="currentConfig" />
         </div>
         <mu-dialog width="360" transition="slide-bottom" fullscreen :open.sync="openFullscreen">
@@ -43,21 +53,40 @@
                 <mu-button slot="left" icon @click="closeFullscreenDialog">
                     <mu-icon value="close"></mu-icon>
                 </mu-button>
-                <mu-button slot="right" flat @click="closeFullscreenDialog">
-                    Done
-                </mu-button>
+                <mu-button slot="right" flat @click="closeFullscreenDialog">Done</mu-button>
             </mu-appbar>
             <vue-markdown class="readme" :source="currentPluginData.ReadMe" />
         </mu-dialog>
         <mu-dialog width="360" transition="slide-bottom" :open.sync="openSettings">
-            <pre>{{currentPluginData.Config}}</pre>
+            <template v-for="(item,key) in currentConfig">
+                <template
+                    v-if="currentPluginData.HotConfig && currentPluginData.HotConfig.includes(key)"
+                >
+                    <mu-switch
+                        label-left
+                        :label="key"
+                        :key="key"
+                        v-if="typeof item =='boolean'"
+                        :input-value="item"
+                        @change="v=>modifyConfig(key,v)"
+                    ></mu-switch>
+                    <mu-text-field
+                        :label="key"
+                        :key="key"
+                        v-else
+                        :value="item"
+                        @change="v=>modifyConfig(key,v)"
+                    ></mu-text-field>
+                </template>
+                <div v-else :key="key">{{key}}:{{item}}</div>
+            </template>
         </mu-dialog>
     </div>
 </template>
 
 <script>
 import Vue from "vue";
-import { mapActions, mapState } from "vuex";
+import { mapActions, mapState, mapMutations } from "vuex";
 import VueMarkdown from "vue-markdown";
 
 import toml from "@iarna/toml";
@@ -72,10 +101,11 @@ export default {
             openFullscreen: false,
             openSettings: false,
             currentPluginData: {},
-            pluginAppbar: null
+            titleTabActive: 0,
+            titleTabs:[],
+            titleOps:[]
         };
     },
-    watch: {},
     computed: {
         ...mapState({
             plugins: state => state.plugins,
@@ -85,7 +115,9 @@ export default {
             return "plugin-" + this.currentPluginData.Name.toLowerCase();
         },
         currentConfig() {
-            return toml.parse(this.currentPluginData.Config);
+            return this.currentPluginData.Config
+                ? toml.parse(this.currentPluginData.Config)
+                : {};
         }
     },
     mounted() {
@@ -131,11 +163,14 @@ export default {
     },
     methods: {
         ...mapActions(["fetchEngineInfo", "fetchPlugins", "fetchSummary"]),
+        ...mapMutations(["update"]),
         closeFullscreenDialog() {
             this.openFullscreen = false;
         },
         selectPlugin(name) {
-            this.pluginAppbar = null
+            this.titleTabActive = 0;
+            this.titleTabs= []
+            this.titleOps = []
             this.currentPluginData = this.plugins.find(x => x.Name == name);
         },
         getHelp() {
@@ -143,6 +178,24 @@ export default {
         },
         showSettings() {
             this.openSettings = true;
+        },
+        modifyConfig(key, item) {
+            this.ajax
+                .get(
+                    "/api/modifyConfig?name=" +
+                        this.currentPluginData.Name +
+                        "&key=" +
+                        key +
+                        "&value=" +
+                        JSON.stringify([item])
+                )
+                .then(x => {
+                    if (x == "success") {
+                        let config = this.currentConfig;
+                        config[key] = item;
+                        this.currentPluginData.Config = toml.stringify(config);
+                    }
+                });
         }
     }
 };

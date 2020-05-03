@@ -45,6 +45,7 @@ func run() {
 	http.HandleFunc("/api/listenInfo", listenInfo)
 	http.HandleFunc("/api/snapshot", snapshot)
 	http.HandleFunc("/api/tagRaw", tagRaw)
+	http.HandleFunc("/api/modifyConfig", modifyConfig)
 	http.HandleFunc("/plugin/", getPluginUI)
 	http.HandleFunc("/", website)
 	Print(Green("server gateway start at "), BrightBlue(config.ListenAddr))
@@ -58,7 +59,7 @@ func getConfig(w http.ResponseWriter, r *http.Request) {
 func stopPublish(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
-		if s := FindStream(streamPath); s!=nil {
+		if s := FindStream(streamPath); s != nil {
 			s.Cancel()
 			w.Write([]byte("success"))
 		} else {
@@ -113,12 +114,13 @@ func sysInfo(w http.ResponseWriter, r *http.Request) {
 
 // PluginInfo 插件信息
 type PluginInfo struct {
-	Name    string //插件名称
-	Type    byte   //类型
-	Config  string //插件配置
-	UIDir   string //界面路径
-	ReadMe  string //README.md
-	Version string //插件版本
+	Name      string   //插件名称
+	Type      byte     //类型
+	Config    string   //插件配置
+	UIDir     string   //界面路径
+	ReadMe    string   //README.md
+	Version   string   //插件版本
+	HotConfig []string //热更新配置
 }
 
 func getPlugins(w http.ResponseWriter, r *http.Request) {
@@ -126,14 +128,13 @@ func getPlugins(w http.ResponseWriter, r *http.Request) {
 	var plugins []*PluginInfo
 	for _, plugin := range Plugins {
 		p := &PluginInfo{
-			plugin.Name, plugin.Type, "", plugin.UIDir, "", plugin.Version,
+			plugin.Name, plugin.Type, "", plugin.UIDir, "", plugin.Version, nil,
 		}
-		// if plugin.UI != "" {
-
-		// 	if bytes, err := ioutil.ReadFile(plugin.UI); err == nil {
-		// 		p.UI = string(bytes)
-		// 	}
-		// }
+		if plugin.HotConfig != nil {
+			for k, _ := range plugin.HotConfig {
+				p.HotConfig = append(p.HotConfig, k)
+			}
+		}
 		if bytes, err := ioutil.ReadFile(filepath.Join(plugin.Dir, "README.md")); err == nil {
 			p.ReadMe = string(bytes)
 		}
@@ -175,7 +176,7 @@ func listenInfo(w http.ResponseWriter, r *http.Request) {
 		if max := r.URL.Query().Get("max"); max != "" {
 			maxSub, _ = strconv.Atoi(max)
 		}
-		if stream := FindStream(streamPath); stream!=nil {
+		if stream := FindStream(streamPath); stream != nil {
 			sse := NewSSE(w, r.Context())
 			sub := new(Subscriber)
 			sub.Type = "GateWay"
@@ -186,7 +187,7 @@ func listenInfo(w http.ResponseWriter, r *http.Request) {
 					l = len(stream.SubscriberInfo)
 				}
 				l += 2
-				sendList := make([]byte, l)
+				sendList := make([]int, l)
 				sendList[0] = stream.AVRing.Index
 				sendList[1] = stream.FirstScreen.Index
 				for i := 0; i < maxSub && i < len(stream.SubscriberInfo); i++ {
@@ -209,26 +210,26 @@ func listenInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 type SnapShot struct {
-	Type      byte
-	Timestamp uint32
-	Payload   []byte
+	Type    byte
+	Size    int
+	Payload []byte
 }
 
 func snapshot(w http.ResponseWriter, r *http.Request) {
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
-		if stream:=FindStream(streamPath); stream!=nil {
+		if stream := FindStream(streamPath); stream != nil {
 			output := make([]*SnapShot, RING_SIZE)
 			p := stream.AVRing.Clone()
 
 			for i := 0; i < RING_SIZE; i++ {
 				output[i] = &SnapShot{
-					Type:      p.Type,
-					Timestamp: p.Timestamp,
+					Type: p.Type,
+					Size: len(p.Payload),
 				}
-				if len(p.Payload) < 10 {
+				if len(p.Payload) < 14 {
 					output[i].Payload = p.Payload
 				} else {
-					output[i].Payload = p.Payload[:10]
+					output[i].Payload = p.Payload[:14]
 				}
 				p.GoBack()
 			}
@@ -244,7 +245,7 @@ func snapshot(w http.ResponseWriter, r *http.Request) {
 }
 func tagRaw(w http.ResponseWriter, r *http.Request) {
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
-		if stream:=FindStream(streamPath); stream!=nil {
+		if stream := FindStream(streamPath); stream != nil {
 			t := r.URL.Query().Get("t")
 			if t == "a" {
 				if stream.AudioTag == nil {
@@ -264,5 +265,34 @@ func tagRaw(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		w.Write([]byte("no query stream"))
+	}
+}
+func modifyConfig(w http.ResponseWriter, r *http.Request) {
+	if pluginName := r.URL.Query().Get("name"); pluginName != "" {
+		if plugin, ok := Plugins[pluginName]; ok {
+			if key := r.URL.Query().Get("key"); key != "" {
+				if plugin.HotConfig != nil {
+					if f, ok := plugin.HotConfig[key]; ok {
+						value := make([]interface{}, 0)
+						if err := json.Unmarshal([]byte(r.URL.Query().Get("value")), &value); err == nil {
+							f(value[0])
+							w.Write([]byte("success"))
+						} else {
+							w.Write([]byte(err.Error()))
+						}
+					} else {
+						w.Write([]byte("no such HotConfig"))
+					}
+				} else {
+					w.Write([]byte("no HotConfig"))
+				}
+			} else {
+				w.Write([]byte("no query key"))
+			}
+		} else {
+			w.Write([]byte("no such plugin"))
+		}
+	} else {
+		w.Write([]byte("no query name"))
 	}
 }

@@ -4,6 +4,8 @@ import store from './store'
 import './plugins/iview'
 import './plugins/muse-ui.js'
 import StartTime from "./components/StartTime"
+import Button from "./components/Button"
+import StreamTable from "./components/StreamTable"
 Vue.config.productionTip = false
 window.Vue = Vue
 
@@ -23,6 +25,8 @@ function unitFormat(value, unit = "") {
 Vue.prototype.ajax = window.ajax
 Vue.prototype.unitFormat = unitFormat
 Vue.component('StartTime', StartTime)
+Vue.component('m-button',Button)
+Vue.component('stream-table',StreamTable)
 new Vue({
   store,
   render: h => h(App)

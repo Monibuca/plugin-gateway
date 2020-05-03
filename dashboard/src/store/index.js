@@ -7,7 +7,6 @@ const SoundFormat = {
     1: "ADPCM",
     2: "MP3",
     3: "Linear PCM, little endian",
-    4: "Nellymoser 16kHz mono",
     5: "Nellymoser 8kHz mono",
     6: "Nellymoser",
     7: "G.711 A-law logarithmic PCM",

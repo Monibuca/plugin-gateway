@@ -185,6 +185,26 @@ theme.addCreateTheme(() => {
     .mu-input.has-label .mu-input-label.float{
         color : ${Cyberpunk[0]};
     }
+    .mu-switch-label {
+        color : ${Cyberpunk[4]};
+    }
+    .mu-switch-track {
+        box-shadow: 0px 0px 2px 2px black inset, 0 0 10px 0px ${Cyberpunk[4]};
+        background: #1f6e84;
+    }
+    .mu-switch-checked .mu-switch-track {
+        background: ${Cyberpunk[4]};
+        opacity :1;
+    }
+    .mu-switch-thumb
+    {
+        box-shadow: 0 5px 4px 0 #383838 inset;
+        background: black;
+    }
+    .mu-switch-checked .mu-switch-thumb{
+        box-shadow: 0 5px 4px 0 #383838 inset;
+        background: black;
+    }
     `;
 });
 theme.use('Cyberpunk')

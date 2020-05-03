@@ -145,7 +145,7 @@
 
         // headers
         settings.headers = extend(baseHeader, settings.headers || {});
-
+        xhr.responseType = dataType||"text"
         // on ready state change
         xhr.onreadystatechange = function () {
             // readystate
@@ -155,25 +155,19 @@
                 var error = false;
                 //
                 if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 304) {
-                    dataType = dataType || mimeToDataType(xhr.getResponseHeader('content-type'));
-                    result = xhr.responseText;
-
+                    result = xhr.response;
                     try {
                         // xml
                         if (dataType === 'xml') {
                             result = xhr.responseXML;
                         }
-                        // json
-                        else if (dataType === 'json') {
-                            result = blankRE.test(result) ? null : JSON.parse(result);
-                        } else if (dataType === "arraybuffer") {
-                            result = xhr.response;
+                        else if (dataType==="text"){
+                            result = xhr.responseText;
                         }
                     }
                     catch (e) {
                         error = e;
                     }
-
                     if (error) {
                         ajaxError(error, 'parseerror', xhr, settings);
                     }
