@@ -249,9 +249,10 @@ export default {
             es.onmessage = evt => {
                 let data = JSON.parse(evt.data);
                 this.lastIndex = this.firstIndex;
-                this.pubIndex = data[0] >> 2;
-                this.firstIndex = data[1] >> 2;
-                this.currentRoomInfo = data.slice(2).map(x => x >> 2);
+                let ringSize = this.$store.state.engineInfo.RingSize - 8
+                this.pubIndex = data[0] >> ringSize;
+                this.firstIndex = data[1] >> ringSize;
+                this.currentRoomInfo = data.slice(2).map(x => x >> ringSize);
             };
         },
         showSlider() {

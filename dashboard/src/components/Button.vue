@@ -1,6 +1,6 @@
 <template>
-  <div v-on="$listeners" :class="isMouseDown?'a mousedown':'a'" @mousedown="isMouseDown=true" @mouseup="isMouseDown=false" @mouseleave="isMouseDown=false">
-      <component :is="href?'a':'div'" :href="href" target="_blank" class="b">
+  <div v-on="$listeners" :class="(isMouseDown?'a mousedown':'a')" @mousedown="isMouseDown=true" @mouseup="isMouseDown=false" @mouseleave="isMouseDown=false">
+      <component :is="href?'a':'div'" :href="href" target="_blank" :class="(blink?' b blink':'b')">
           <slot name="default"/>
       </component>
   </div>
@@ -9,7 +9,8 @@
 <script>
 export default {
     props:{
-        href:String
+        href:String,
+        blink:Boolean
     },
     data(){
         return {
@@ -21,6 +22,17 @@ export default {
 
 <style lang="less" scoped>
 @mainColor :#feeb73;
+@keyframes blink {
+    0% {
+        box-shadow:  0 0 5px 1px white inset,0 -10px 10px 1px @mainColor inset,2px 2px 3px 0 @mainColor;
+    }
+    50% {
+        box-shadow: 0 0 10px 0px white inset,0 0 3px 0px @mainColor;
+    }
+    100% {
+        box-shadow:  0 0 5px 1px white inset,0 -10px 10px 1px @mainColor inset,2px 2px 3px 0 @mainColor;
+    }
+}
 
 .a{
     margin: auto;
@@ -46,6 +58,7 @@ export default {
     height:30px;
     box-shadow: 0 0 10px 0px white inset,0 0 3px 0px @mainColor;
     display:block;
+    font-size: 13px;
 }
 .mousedown .b{
     top:-1px;
@@ -54,5 +67,9 @@ export default {
 .b:hover{
     color: white;
     box-shadow:  0 0 5px 1px white inset,0 -10px 10px 1px @mainColor inset,2px 2px 3px 0 @mainColor;
+}
+
+.blink {
+    animation: blink 1s infinite;
 }
 </style>>

@@ -9,11 +9,7 @@
                 <mu-button icon color="primary" @click="showSettings">
                     <mu-icon value="settings"></mu-icon>
                 </mu-button>
-                <m-button
-                    v-for="op in titleOps"
-                    :key="op.label"
-                    v-bind="op"
-                >{{op.label}}</m-button>
+                <component v-for="(op,i) in titleOps" :key="'op'+i" :is="op"></component>
                 <mu-tabs v-if="titleTabs.length" :value.sync="titleTabActive" indicator-color="#80deea" inverse center>
                     <mu-tab v-for="op in titleTabs" :key="op">{{op}}</mu-tab>
                 </mu-tabs>

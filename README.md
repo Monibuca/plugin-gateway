@@ -25,5 +25,9 @@ ListenAddr = ":8081"
 # API
  - /api/sysInfo 获取系统信息，包含引擎版本和实例启动时间
  - /api/summary 获取系统实时状态，包括cpu、内存、网卡流量数据
- - /api/getConfig 获取配置文件
- - /api/getPlugins 获取所有插件信息
+ - /api/config 获取配置文件
+ - /api/plugins 获取所有插件信息
+ - /api/listenInfo 收听流的缓冲信息
+ - /api/snapshot 获取缓冲快照数据
+ - /api/tagRaw 获取音视频Tag的原始二进制数据
+ - /api/modifyConfig 修改插件配置

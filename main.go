@@ -218,10 +218,10 @@ type SnapShot struct {
 func snapshot(w http.ResponseWriter, r *http.Request) {
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
 		if stream := FindStream(streamPath); stream != nil {
-			output := make([]*SnapShot, RING_SIZE)
+			output := make([]*SnapShot, stream.AVRing.Size)
 			p := stream.AVRing.Clone()
 
-			for i := 0; i < RING_SIZE; i++ {
+			for i := 0; i < stream.AVRing.Size; i++ {
 				output[i] = &SnapShot{
 					Type: p.Type,
 					Size: len(p.Payload),
