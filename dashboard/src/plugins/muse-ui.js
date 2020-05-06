@@ -185,7 +185,7 @@ theme.addCreateTheme(() => {
     .mu-input.has-label .mu-input-label.float{
         color : ${Cyberpunk[0]};
     }
-    .mu-switch-label {
+    .mu-switch-label,.mu-checkbox ,.mu-checkbox-label,.mu-checkbox-checked{
         color : ${Cyberpunk[4]};
     }
     .mu-switch-track {
