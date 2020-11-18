@@ -46,6 +46,7 @@ func run() {
 	http.HandleFunc("/api/snapshot", snapshot)
 	http.HandleFunc("/api/tagRaw", tagRaw)
 	http.HandleFunc("/api/modifyConfig", modifyConfig)
+	http.HandleFunc("/api/getIFrame", getIFrame)
 	http.HandleFunc("/plugin/", getPluginUI)
 	http.HandleFunc("/", website)
 	Print(Green("server gateway start at "), BrightBlue(config.ListenAddr))
@@ -84,6 +85,18 @@ func website(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Header().Set("Location", "/")
 		w.WriteHeader(302)
+	}
+}
+func getIFrame(w http.ResponseWriter, r *http.Request) {
+	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
+		if s := FindStream(streamPath); s != nil {
+			w.Write(s.VideoTag.Payload[5:])
+			w.Write(s.FirstScreen.Payload[5:])
+		} else {
+			w.Write([]byte("no such stream"))
+		}
+	} else {
+		w.Write([]byte("no query stream"))
 	}
 }
 func summary(w http.ResponseWriter, r *http.Request) {
