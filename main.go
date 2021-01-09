@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"mime"
 	"net/http"
 	"path"
@@ -17,11 +16,17 @@ import (
 	. "github.com/Monibuca/engine/v2"
 	"github.com/Monibuca/engine/v2/avformat"
 	. "github.com/Monibuca/engine/v2/util"
+	"github.com/Monibuca/utils"
 	. "github.com/logrusorgru/aurora"
 )
 
 var (
-	config        = new(ListenerConfig)
+	config struct {
+		ListenAddr    string
+		CertFile      string
+		KeyFile       string
+		ListenAddrTLS string
+	}
 	startTime     = time.Now()
 	dashboardPath string
 )
@@ -30,7 +35,7 @@ func init() {
 	plugin := &PluginConfig{
 		Name:   "GateWay",
 		Type:   PLUGIN_HOOK,
-		Config: config,
+		Config: &config,
 		Run:    run,
 	}
 	InstallPlugin(plugin)
@@ -49,8 +54,8 @@ func run() {
 	http.HandleFunc("/api/getIFrame", getIFrame)
 	http.HandleFunc("/plugin/", getPluginUI)
 	http.HandleFunc("/", website)
-	Print(Green("server gateway start at "), BrightBlue(config.ListenAddr))
-	log.Fatal(http.ListenAndServe(config.ListenAddr, nil))
+	Print(Green("server gateway start at "), BrightBlue(config.ListenAddr), BrightBlue(config.ListenAddrTLS))
+	utils.ListenAddrs(config.ListenAddr, config.ListenAddrTLS, config.CertFile, config.KeyFile, nil)
 }
 
 func getConfig(w http.ResponseWriter, r *http.Request) {
