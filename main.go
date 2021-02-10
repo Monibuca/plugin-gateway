@@ -122,7 +122,7 @@ func getPlugins(w http.ResponseWriter, r *http.Request) {
 			plugin.Name, "", "", plugin.Version, nil,
 		}
 		if plugin.HotConfig != nil {
-			for k, _ := range plugin.HotConfig {
+			for k := range plugin.HotConfig {
 				p.HotConfig = append(p.HotConfig, k)
 			}
 		}
