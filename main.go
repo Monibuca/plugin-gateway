@@ -40,7 +40,7 @@ func run() {
 	http.HandleFunc("/api/stop", stopPublish)
 	http.HandleFunc("/api/config", getConfig)
 	http.HandleFunc("/api/plugins", getPlugins)
-	// http.HandleFunc("/api/listenInfo", listenInfo)
+	http.HandleFunc("/api/listenInfo", listenInfo)
 	// http.HandleFunc("/api/snapshot", snapshot)
 	http.HandleFunc("/api/tagRaw", tagRaw)
 	http.HandleFunc("/api/modifyConfig", modifyConfig)
@@ -84,11 +84,17 @@ func website(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(302)
 	}
 }
+
 func getIFrame(w http.ResponseWriter, r *http.Request) {
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
 		if s := FindStream(streamPath); s != nil {
-			w.Write(s.VideoTracks[0].RtmpTag[5:])
-			w.Write(s.VideoTracks[0].Buffer.GetAt(s.VideoTracks[0].FirstScreen).Payload)
+			if v, ok := s.VideoTracks.Load("h264"); ok && v.(*TrackWaiter).Track != nil {
+				vt := v.(*TrackWaiter).Track.(*VideoTrack)
+				w.Write(vt.RtmpTag[5:])
+				w.Write(vt.Buffer.GetAt(vt.FirstScreen).Payload)
+			} else {
+				w.Write([]byte("no h264 stream"))
+			}
 		} else {
 			w.Write([]byte("no such stream"))
 		}
@@ -142,44 +148,33 @@ func getPlugins(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(bytes)
 }
 
-// func listenInfo(w http.ResponseWriter, r *http.Request) {
-// 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
-// 		maxSub := 5
-// 		if max := r.URL.Query().Get("max"); max != "" {
-// 			maxSub, _ = strconv.Atoi(max)
-// 		}
-// 		if stream := FindStream(streamPath); stream != nil {
-// 			sse := NewSSE(w, r.Context())
-// 			sub := new(Subscriber)
-// 			sub.Type = "GateWay"
-// 			sub.ID = r.RemoteAddr
-// 			sub.OnData = func(packet *avformat.SendPacket) (err error) {
-// 				l := maxSub
-// 				if l > len(stream.SubscriberInfo) {
-// 					l = len(stream.SubscriberInfo)
-// 				}
-// 				l += 2
-// 				sendList := make([]int, l)
-// 				sendList[0] = stream.AVRing.Index
-// 				sendList[1] = stream.FirstScreen.Index
-// 				for i := 0; i < maxSub && i < len(stream.SubscriberInfo); i++ {
-// 					sendList[i+2] = stream.SubscriberInfo[i].BufferLength
-// 				}
-// 				err = sse.WriteJSON(sendList)
-// 				return
-// 			}
-// 			go sub.Subscribe(streamPath)
-// 			<-r.Context().Done()
-// 			Println("cancel listenInfo")
-// 			sub.Cancel()
-// 		} else {
-// 			w.Write([]byte("no such stream"))
-// 		}
-// 	} else {
-// 		w.Write([]byte("no query stream"))
-// 	}
+func listenInfo(w http.ResponseWriter, r *http.Request) {
+	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
+		if stream := FindStream(streamPath); stream != nil {
+			sse := utils.NewSSE(w, r.Context())
+			sub := Subscriber{Type: "GateWay", ID: r.RemoteAddr, Ctx2: r.Context()}
+			at := stream.OriginAudioTrack
+			vt := stream.OriginVideoTrack
+			sendList := make([]int, 3)
+			sub.OnAudio = func(pack AudioPack) {
+				sendList[1] = int(at.Buffer.Index)
+				sse.WriteJSON(sendList)
+			}
+			sub.OnVideo = func(pack VideoPack) {
+				sendList[0] = int(vt.Buffer.Index)
+				sendList[1] = int(vt.FirstScreen)
+				sse.WriteJSON(sendList)
+			}
+			sub.Play(at, vt)
+			utils.Println("cancel listenInfo")
+		} else {
+			w.Write([]byte("no such stream"))
+		}
+	} else {
+		w.Write([]byte("no query stream"))
+	}
 
-// }
+}
 
 type SnapShot struct {
 	Type    byte
@@ -220,17 +215,17 @@ func tagRaw(w http.ResponseWriter, r *http.Request) {
 		if stream := FindStream(streamPath); stream != nil {
 			t := r.URL.Query().Get("t")
 			if t == "a" {
-				if stream.AudioTracks[0].RtmpTag == nil {
-					w.Write([]byte("no audio tag"))
-					return
+				if at := stream.OriginAudioTrack; at != nil {
+					w.Write(at.RtmpTag)
+				} else {
+					w.Write([]byte("no OriginAudioTrack"))
 				}
-				w.Write(stream.AudioTracks[0].RtmpTag)
 			} else {
-				if stream.VideoTracks[0].RtmpTag == nil {
-					w.Write([]byte("no video tag"))
-					return
+				if vt := stream.OriginVideoTrack; vt != nil {
+					w.Write(vt.RtmpTag)
+				} else {
+					w.Write([]byte("no OriginVideoTrack"))
 				}
-				w.Write(stream.VideoTracks[0].RtmpTag)
 			}
 		} else {
 			w.Write([]byte("no such stream"))
