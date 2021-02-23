@@ -91,7 +91,7 @@ func getIFrame(w http.ResponseWriter, r *http.Request) {
 			if v, ok := s.VideoTracks.Load("h264"); ok && v.(*TrackWaiter).Track != nil {
 				vt := v.(*TrackWaiter).Track.(*VideoTrack)
 				w.Write(vt.RtmpTag[5:])
-				w.Write(vt.Buffer.GetAt(vt.FirstScreen).Payload)
+				w.Write(vt.Buffer.GetAt(vt.IDRIndex).Payload)
 			} else {
 				w.Write([]byte("no h264 stream"))
 			}
@@ -162,7 +162,7 @@ func listenInfo(w http.ResponseWriter, r *http.Request) {
 			}
 			sub.OnVideo = func(pack VideoPack) {
 				sendList[0] = int(vt.Buffer.Index)
-				sendList[1] = int(vt.FirstScreen)
+				sendList[1] = int(vt.IDRIndex)
 				sse.WriteJSON(sendList)
 			}
 			sub.Play(at, vt)
