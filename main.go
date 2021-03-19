@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
-	"io/ioutil"
 	"mime"
 	"net/http"
 	"path"
