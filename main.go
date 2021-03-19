@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"bytes"
+	"embed"
 	"encoding/json"
 	"io/ioutil"
 	"mime"
@@ -31,12 +32,20 @@ var (
 	dashboardPath string
 )
 
+//go:embed ui/*
+//go:embed README.md
+var ui embed.FS
+
+//go:embed dashboard/*
+var dashboard embed.FS
+
 func init() {
 	plugin := &PluginConfig{
 		Name:   "GateWay",
 		Type:   PLUGIN_HOOK,
 		Config: &config,
 		Run:    run,
+		UIFile: &ui,
 	}
 	InstallPlugin(plugin)
 	dashboardPath = filepath.Join(plugin.Dir, "dashboard", "dist")
@@ -83,13 +92,18 @@ func website(w http.ResponseWriter, r *http.Request) {
 	if mime := mime.TypeByExtension(path.Ext(filePath)); mime != "" {
 		w.Header().Set("Content-Type", mime)
 	}
-	if f, err := ioutil.ReadFile(dashboardPath + filePath); err == nil {
+	if f, err := dashboard.ReadFile("dashboard/dist" + filePath); err == nil {
 		if _, err = w.Write(f); err != nil {
 			w.WriteHeader(505)
 		}
 	} else {
-		w.Header().Set("Location", "/")
-		w.WriteHeader(302)
+		//避免循环重定向
+		if r.URL.Path == "/" {
+			w.WriteHeader(404)
+		} else {
+			w.Header().Set("Location", "/")
+			w.WriteHeader(302)
+		}
 	}
 }
 func getIFrame(w http.ResponseWriter, r *http.Request) {
@@ -146,15 +160,18 @@ func getPlugins(w http.ResponseWriter, r *http.Request) {
 	var plugins []*PluginInfo
 	for _, plugin := range Plugins {
 		p := &PluginInfo{
-			plugin.Name, plugin.Type, "", plugin.UIDir, "", plugin.Version, nil,
+			plugin.Name, plugin.Type, "", "", "", plugin.Version, nil,
 		}
 		if plugin.HotConfig != nil {
 			for k, _ := range plugin.HotConfig {
 				p.HotConfig = append(p.HotConfig, k)
 			}
 		}
-		if bytes, err := ioutil.ReadFile(filepath.Join(plugin.Dir, "README.md")); err == nil {
-			p.ReadMe = string(bytes)
+		if plugin.UIFile != nil {
+			p.UIDir = "ui" // 加这一行供前端判断是否有ui
+			if bytes, err := plugin.UIFile.ReadFile("README.md"); err == nil {
+				p.ReadMe = string(bytes)
+			}
 		}
 		var out bytes.Buffer
 		if toml.NewEncoder(&out).Encode(plugin.Config) == nil {
@@ -174,11 +191,14 @@ func getPluginUI(w http.ResponseWriter, r *http.Request) {
 	pluginName := filePath[:strings.Index(filePath, "/")]
 	filePath = filePath[len(pluginName)+1:]
 	if plugin, ok := Plugins[pluginName]; ok {
-		filePath := filepath.Join(plugin.UIDir, filePath)
+		if plugin.UIFile == nil {
+			w.WriteHeader(404)
+			return
+		}
 		if mime := mime.TypeByExtension(path.Ext(filePath)); mime != "" {
 			w.Header().Set("Content-Type", mime)
 		}
-		if f, err := ioutil.ReadFile(filePath); err == nil {
+		if f, err := plugin.UIFile.ReadFile("ui/dist/" + filePath); err == nil {
 			if _, err = w.Write(f); err != nil {
 				w.WriteHeader(505)
 			}
