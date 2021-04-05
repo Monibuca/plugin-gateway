@@ -45,7 +45,9 @@ func run() {
 	http.HandleFunc("/api/gateway/tagRaw", tagRaw)
 	http.HandleFunc("/api/gateway/modifyConfig", modifyConfig)
 	http.HandleFunc("/api/gateway/getIFrame", getIFrame)
-	http.HandleFunc("/", website)
+	if config.StaticPath != "" {
+		http.HandleFunc("/", website)
+	}
 	utils.Print(Green("server gateway start at "), BrightBlue(config.ListenAddr), BrightBlue(config.ListenAddrTLS))
 	utils.ListenAddrs(config.ListenAddr, config.ListenAddrTLS, config.CertFile, config.KeyFile, nil)
 }
