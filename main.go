@@ -93,7 +93,12 @@ func getIFrame(w http.ResponseWriter, r *http.Request) {
 			if v, ok := s.VideoTracks.Load("h264"); ok && v.(*TrackWaiter).Track != nil {
 				vt := v.(*TrackWaiter).Track.(*VideoTrack)
 				w.Write(vt.RtmpTag[5:])
-				w.Write(vt.Buffer.GetAt(vt.IDRIndex).Payload)
+				payload := vt.Buffer.GetAt(vt.IDRIndex).Payload
+				length := len(payload)
+				b := make([]byte, 4)
+				utils.BigEndian.PutUint32(b, uint32(length))
+				w.Write(b)
+				w.Write(payload)
 			} else {
 				w.Write([]byte("no h264 stream"))
 			}
