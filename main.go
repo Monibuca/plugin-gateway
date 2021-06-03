@@ -2,17 +2,20 @@ package gateway
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"mime"
 	"net/http"
 	"path"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/BurntSushi/toml"
 	. "github.com/Monibuca/engine/v3"
 	"github.com/Monibuca/utils/v3"
+	"github.com/Monibuca/utils/v3/codec"
 	. "github.com/logrusorgru/aurora"
 )
 
@@ -45,6 +48,7 @@ func run() {
 	http.HandleFunc("/api/gateway/tagRaw", tagRaw)
 	http.HandleFunc("/api/gateway/modifyConfig", modifyConfig)
 	http.HandleFunc("/api/gateway/getIFrame", getIFrame)
+	http.HandleFunc("/api/gateway/h264", getH264)
 	if config.StaticPath != "" {
 		http.HandleFunc("/", website)
 	}
@@ -56,6 +60,35 @@ func getConfig(w http.ResponseWriter, r *http.Request) {
 	w.Write(ConfigRaw)
 }
 
+// 输出h264裸码流
+func getH264(w http.ResponseWriter, r *http.Request) {
+	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
+		p := Subscriber{
+			Type: "h264 raw",
+			OnVideo: func(pack VideoPack) {
+				w.Write(codec.NALU_Delimiter2)
+				w.Write(pack.Payload)
+			},
+			Ctx2: r.Context(),
+		}
+		if l := r.URL.Query().Get("len"); l != "" {
+			s, _ := strconv.Atoi(l)
+			p.Ctx2, _ = context.WithTimeout(p.Ctx2, time.Duration(s))
+		}
+		if p.Subscribe(streamPath) == nil {
+			vt := p.GetVideoTrack("h264")
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Transfer-Encoding", "chunked")
+			w.Write(codec.NALU_Delimiter2)
+			w.Write(vt.SPS)
+			w.Write(codec.NALU_Delimiter2)
+			w.Write(vt.PPS)
+			p.PlayVideo(vt)
+			return
+		}
+	}
+	w.WriteHeader(404)
+}
 func stopPublish(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
