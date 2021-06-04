@@ -3,14 +3,16 @@ package gateway
 import (
 	"bytes"
 	"context"
-	"encoding/json"
-	"io/ioutil"
-	"mime"
-	"net/http"
-	"path"
-	"path/filepath"
-	"strconv"
-	"time"
+    "encoding/base64"
+    "encoding/json"
+    "io/ioutil"
+    "mime"
+    "net/http"
+    "os/exec"
+    "path"
+    "path/filepath"
+    "strconv"
+    "time"
 
 	"github.com/BurntSushi/toml"
 	. "github.com/Monibuca/engine/v3"
@@ -125,8 +127,18 @@ func getIFrame(w http.ResponseWriter, r *http.Request) {
 		if s := FindStream(streamPath); s != nil {
 			if v, ok := s.VideoTracks.Load("h264"); ok && v.(*TrackWaiter).Track != nil {
 				vt := v.(*TrackWaiter).Track.(*VideoTrack)
-				w.Write(vt.RtmpTag[5:])
 				payload := vt.Buffer.GetAt(vt.IDRIndex).Payload
+				if getImage := r.URL.Query().Get("getImage"); getImage == "1" {
+                    img, err := snapIFrame(vt.SPS, vt.PPS, payload)
+                    if err != nil {
+                        w.WriteHeader(500)
+                        w.Write([]byte(err.Error()))
+                        return
+                    }
+                    w.Write([]byte(img))
+                    return
+				}
+				w.Write(vt.RtmpTag[5:])
 				length := len(payload)
 				b := make([]byte, 4)
 				utils.BigEndian.PutUint32(b, uint32(length))
@@ -302,4 +314,26 @@ func modifyConfig(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Write([]byte("no query name"))
 	}
+}
+
+func snapIFrame(sps, pps, payload []byte) (string, error) {
+    buf := bytes.NewBuffer(nil)
+    buf.Write(codec.NALU_Delimiter2)
+    buf.Write(sps)
+
+    buf.Write(codec.NALU_Delimiter2)
+    buf.Write(pps)
+
+    buf.Write(codec.NALU_Delimiter2)
+    buf.Write(payload)
+
+    cmd := exec.Command("ffmpeg", "-i", "pipe:0", "-vframes", "1", "-f", "mjpeg", "pipe:1")
+    cmd.Stdin = bytes.NewReader(buf.Bytes())
+    var out bytes.Buffer
+    cmd.Stdout = &out
+    err := cmd.Run()
+    if err != nil {
+        return "", err
+    }
+    return base64.StdEncoding.EncodeToString(out.Bytes()), nil
 }

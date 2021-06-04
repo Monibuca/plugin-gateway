@@ -32,3 +32,4 @@ StaticPath   =  "/opt/website"
  - /api/snapshot 获取缓冲快照数据
  - /api/tagRaw 获取音视频Tag的原始二进制数据
  - /api/modifyConfig 修改插件配置
+ - /api/getIFrame 获取关键帧二进制数据或base64 StdEncoding后的图片（依赖FFmpeg可执行文件），默认二进制数据，添加参数 getImage=1 返回图片
