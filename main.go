@@ -124,9 +124,15 @@ func website(w http.ResponseWriter, r *http.Request) {
 
 func getIFrame(w http.ResponseWriter, r *http.Request) {
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
+		// codec := r.URL.Query().Get("codec")
 		if s := FindStream(streamPath); s != nil {
-			if v := s.WaitVideoTrack("h264"); v != nil {
-				v.WriteByteStream(w, v.Buffer.GetAt(v.IDRIndex).VideoPack)
+			if v := s.WaitVideoTrack(); v != nil {
+				w.Write(v.ExtraData.Payload[5:])
+				idr := v.Buffer.GetAt(v.IDRIndex)
+				b := make([]byte, 4)
+				utils.BigEndian.PutUint32(b, uint32(len(idr.NALUs[0])))
+				w.Write(b)
+				w.Write(idr.NALUs[0])
 			} else {
 				w.Write([]byte("no h264 stream"))
 			}
