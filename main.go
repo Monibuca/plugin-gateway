@@ -128,7 +128,7 @@ func getIFrame(w http.ResponseWriter, r *http.Request) {
 		if s := FindStream(streamPath); s != nil {
 			if v := s.WaitVideoTrack(); v != nil {
 				w.Write(v.ExtraData.Payload[5:])
-				idr := v.Buffer.GetAt(v.IDRIndex)
+				idr := v.IDRing.Value.(*RingItem).Value.(*VideoPack)
 				b := make([]byte, 4)
 				utils.BigEndian.PutUint32(b, uint32(len(idr.NALUs[0])))
 				w.Write(b)
