@@ -65,7 +65,7 @@ func getH264(w http.ResponseWriter, r *http.Request) {
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
 		p := Subscriber{
 			Type: "h264 raw",
-			OnVideo: func(pack VideoPack) {
+			OnVideo: func(ts uint32,pack *VideoPack) {
 				for _, nalu := range pack.NALUs {
 					w.Write(codec.NALU_Delimiter2)
 					w.Write(nalu)
