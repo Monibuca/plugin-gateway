@@ -3,6 +3,7 @@ package gateway
 import (
 	"bytes"
 	"context"
+	"embed"
 	"encoding/json"
 	"io/ioutil"
 	"mime"
@@ -19,6 +20,9 @@ import (
 	. "github.com/logrusorgru/aurora"
 )
 
+//go:embed ui/*
+var ui embed.FS
+
 var (
 	config struct {
 		ListenAddr    string
@@ -31,6 +35,7 @@ var (
 )
 
 func init() {
+	config.StaticPath = "ui"
 	plugin := &PluginConfig{
 		Name:   "GateWay",
 		Config: &config,
@@ -49,9 +54,7 @@ func run() {
 	http.HandleFunc("/api/gateway/modifyConfig", modifyConfig)
 	http.HandleFunc("/api/gateway/getIFrame", getIFrame)
 	http.HandleFunc("/api/gateway/h264", getH264)
-	if config.StaticPath != "" {
-		http.HandleFunc("/", website)
-	}
+	http.HandleFunc("/", website)
 	utils.Print(Green("server gateway start at "), BrightBlue(config.ListenAddr), BrightBlue(config.ListenAddrTLS))
 	utils.ListenAddrs(config.ListenAddr, config.ListenAddrTLS, config.CertFile, config.KeyFile, nil)
 }
@@ -112,6 +115,7 @@ func website(w http.ResponseWriter, r *http.Request) {
 	if mime := mime.TypeByExtension(path.Ext(filePath)); mime != "" {
 		w.Header().Set("Content-Type", mime)
 	}
+	w.Header().Set("Cache-Control","max-age=3600")
 	if f, err := ioutil.ReadFile(config.StaticPath + filePath); err == nil {
 		if _, err = w.Write(f); err != nil {
 			w.WriteHeader(505)
