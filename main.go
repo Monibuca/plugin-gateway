@@ -68,7 +68,7 @@ func getH264(w http.ResponseWriter, r *http.Request) {
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
 		p := Subscriber{
 			Type: "h264 raw",
-			OnVideo: func(ts uint32,pack *VideoPack) {
+			OnVideo: func(ts uint32, pack *VideoPack) {
 				for _, nalu := range pack.NALUs {
 					w.Write(codec.NALU_Delimiter2)
 					w.Write(nalu)
@@ -115,8 +115,14 @@ func website(w http.ResponseWriter, r *http.Request) {
 	if mime := mime.TypeByExtension(path.Ext(filePath)); mime != "" {
 		w.Header().Set("Content-Type", mime)
 	}
-	w.Header().Set("Cache-Control","max-age=3600")
-	if f, err := ioutil.ReadFile(config.StaticPath + filePath); err == nil {
+	w.Header().Set("Cache-Control", "max-age=3600")
+	if config.StaticPath == "ui" {
+		if bytes, err := ui.ReadFile("ui" + filePath); err == nil {
+			if _, err = w.Write(bytes); err != nil {
+				w.WriteHeader(505)
+			}
+		}
+	} else if f, err := ioutil.ReadFile(config.StaticPath + filePath); err == nil {
 		if _, err = w.Write(f); err != nil {
 			w.WriteHeader(505)
 		}
@@ -124,6 +130,7 @@ func website(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Location", "/")
 		w.WriteHeader(302)
 	}
+	
 }
 
 func getIFrame(w http.ResponseWriter, r *http.Request) {
