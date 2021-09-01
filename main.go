@@ -113,6 +113,9 @@ func website(w http.ResponseWriter, r *http.Request) {
 		filePath = "/index.html"
 	}
 	if mime := mime.TypeByExtension(path.Ext(filePath)); mime != "" {
+		if strings.Contains(filePath,".js"){
+			mime = "text/javascript; charset=utf-8"
+		}
 		w.Header().Set("Content-Type", mime)
 	}
 	w.Header().Set("Cache-Control", "max-age=3600")
