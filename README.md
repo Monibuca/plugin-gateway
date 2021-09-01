@@ -1,35 +1,39 @@
 # 网关插件
 
-该插件提供一下功能：
-1. 提供HTTP协议的API接口
-2. 提供一个简易的静态资源网站（通过配置StaticPath）
+该插件主要提供http协议访问，供其他插件公用http接口端口，并且提供一些基础的API
 
-# 插件名称
+## 插件地址
 
-GateWay
+github.com/Monibuca/plugin-gateway
 
-# 配置
-
-```toml
-[GateWay]
-ListenAddr = ":8081"
-CertFile   =   "file.cert"
-KeyFile      =  "file.key"
-ListenAddrTLS = ":8082"
-StaticPath   =  "/opt/website"
+## 插件引入
+```go
+import (
+    _ "github.com/Monibuca/plugin-gateway"
+)
 ```
 
-# 使用方法
+## 默认插件配置
+```toml
+[GateWay]
+ListenAddr = ":8080"
+#ListenAddrTLS = ":8082"
+#CertFile = "xxx.cert"
+#KeyFile = "xxx.key"
+#StaticPath = ""
+```
+- `ListenAddr` 公共http监听端口
+- `ListenAddrTLS` 公共https监听端口
+- `CertFile` https用的证书
+- `KeyFile` https用的证书的key
+- `StaticPath` 静态资源目录，设置后可以通过访问公共http监听端口来访问这些静态资源
 
-插件随实例启动而启动，打开浏览器访问配置好的端口即可，例如http://localhost:8081,根据实际情况访问
+## 自带的API接口
 
-
-# API
- - /api/sysInfo 获取系统信息，包含引擎版本和实例启动时间
- - /api/config 获取配置文件
- - /api/plugins 获取所有插件信息
- - /api/listenInfo 收听流的缓冲信息
- - /api/snapshot 获取缓冲快照数据
- - /api/tagRaw 获取音视频Tag的原始二进制数据
- - /api/modifyConfig 修改插件配置
- - /api/getIFrame 获取关键帧二进制数据或base64 StdEncoding后的图片（依赖FFmpeg可执行文件），默认二进制数据，添加参数 getImage=1 返回图片
+- `/api/gateway/sysInfo` 系统信息，包含版本号（Version）和启动时间（StartTime）两个字段
+- `/api/gateway/plugins` 所有插件信息，是一个数组里面包含插件的名称（Name）、版本（Version）、README（ReadMe）、配置（Config）、热更新配置（HotConfig）
+- `/api/gateway/config` 返回原始配置文件
+- `/api/gateway/stop?stream=xxx` 终止某一个流，入参是流标识（stream）
+- `/api/gateway/h264?stream=xxx&len=10` 获取一段h264的流用于调试，入参数len代表需要获取的时长单位是秒
+- `/api/gateway/getIFrame?stream=xxx` 获取一个I帧数据，包含了SPS和PPS信息
+- `/api/gateway/modifyConfig?name=xxx&key=xxx&value=xxx` 修改可以热更新的配置,name是插件名（插件注册时设置）

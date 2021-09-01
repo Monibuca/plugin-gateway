@@ -3,16 +3,15 @@ package gateway
 import (
 	"bytes"
 	"context"
-    "encoding/base64"
-    "encoding/json"
-    "io/ioutil"
-    "mime"
-    "net/http"
-    "os/exec"
-    "path"
-    "path/filepath"
-    "strconv"
-    "time"
+	"embed"
+	"encoding/json"
+	"io/ioutil"
+	"mime"
+	"net/http"
+	"path"
+	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	. "github.com/Monibuca/engine/v3"
@@ -20,6 +19,9 @@ import (
 	"github.com/Monibuca/utils/v3/codec"
 	. "github.com/logrusorgru/aurora"
 )
+
+//go:embed ui/*
+var ui embed.FS
 
 var (
 	config struct {
@@ -33,6 +35,7 @@ var (
 )
 
 func init() {
+	config.StaticPath = "ui"
 	plugin := &PluginConfig{
 		Name:   "GateWay",
 		Config: &config,
@@ -45,15 +48,13 @@ func run() {
 	http.HandleFunc("/api/gateway/stop", stopPublish)
 	http.HandleFunc("/api/gateway/config", getConfig)
 	http.HandleFunc("/api/gateway/plugins", getPlugins)
-	http.HandleFunc("/api/gateway/listenInfo", listenInfo)
+	// http.HandleFunc("/api/gateway/listenInfo", listenInfo)
 	// http.HandleFunc("/api/snapshot", snapshot)
-	http.HandleFunc("/api/gateway/tagRaw", tagRaw)
+	// http.HandleFunc("/api/gateway/tagRaw", tagRaw)
 	http.HandleFunc("/api/gateway/modifyConfig", modifyConfig)
 	http.HandleFunc("/api/gateway/getIFrame", getIFrame)
 	http.HandleFunc("/api/gateway/h264", getH264)
-	if config.StaticPath != "" {
-		http.HandleFunc("/", website)
-	}
+	http.HandleFunc("/", website)
 	utils.Print(Green("server gateway start at "), BrightBlue(config.ListenAddr), BrightBlue(config.ListenAddrTLS))
 	utils.ListenAddrs(config.ListenAddr, config.ListenAddrTLS, config.CertFile, config.KeyFile, nil)
 }
@@ -67,9 +68,11 @@ func getH264(w http.ResponseWriter, r *http.Request) {
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
 		p := Subscriber{
 			Type: "h264 raw",
-			OnVideo: func(pack VideoPack) {
-				w.Write(codec.NALU_Delimiter2)
-				w.Write(pack.Payload)
+			OnVideo: func(ts uint32, pack *VideoPack) {
+				for _, nalu := range pack.NALUs {
+					w.Write(codec.NALU_Delimiter2)
+					w.Write(nalu)
+				}
 			},
 			Ctx2: r.Context(),
 		}
@@ -78,13 +81,13 @@ func getH264(w http.ResponseWriter, r *http.Request) {
 			p.Ctx2, _ = context.WithTimeout(p.Ctx2, time.Duration(s))
 		}
 		if p.Subscribe(streamPath) == nil {
-			vt := p.GetVideoTrack("h264")
+			vt := p.WaitVideoTrack("h264")
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Transfer-Encoding", "chunked")
-			w.Write(codec.NALU_Delimiter2)
-			w.Write(vt.SPS)
-			w.Write(codec.NALU_Delimiter2)
-			w.Write(vt.PPS)
+			for _, nalu := range vt.ExtraData.NALUs {
+				w.Write(codec.NALU_Delimiter2)
+				w.Write(nalu)
+			}
 			p.PlayVideo(vt)
 			return
 		}
@@ -112,7 +115,14 @@ func website(w http.ResponseWriter, r *http.Request) {
 	if mime := mime.TypeByExtension(path.Ext(filePath)); mime != "" {
 		w.Header().Set("Content-Type", mime)
 	}
-	if f, err := ioutil.ReadFile(config.StaticPath + filePath); err == nil {
+	w.Header().Set("Cache-Control", "max-age=3600")
+	if config.StaticPath == "ui" {
+		if bytes, err := ui.ReadFile("ui" + filePath); err == nil {
+			if _, err = w.Write(bytes); err != nil {
+				w.WriteHeader(505)
+			}
+		}
+	} else if f, err := ioutil.ReadFile(config.StaticPath + filePath); err == nil {
 		if _, err = w.Write(f); err != nil {
 			w.WriteHeader(505)
 		}
@@ -120,30 +130,20 @@ func website(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Location", "/")
 		w.WriteHeader(302)
 	}
+	
 }
 
 func getIFrame(w http.ResponseWriter, r *http.Request) {
 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
+		// codec := r.URL.Query().Get("codec")
 		if s := FindStream(streamPath); s != nil {
-			if v, ok := s.VideoTracks.Load("h264"); ok && v.(*TrackWaiter).Track != nil {
-				vt := v.(*TrackWaiter).Track.(*VideoTrack)
-				payload := vt.Buffer.GetAt(vt.IDRIndex).Payload
-				if getImage := r.URL.Query().Get("getImage"); getImage == "1" {
-                    img, err := snapIFrame(vt.SPS, vt.PPS, payload)
-                    if err != nil {
-                        w.WriteHeader(500)
-                        w.Write([]byte(err.Error()))
-                        return
-                    }
-                    w.Write([]byte(img))
-                    return
-				}
-				w.Write(vt.RtmpTag[5:])
-				length := len(payload)
+			if v := s.WaitVideoTrack(); v != nil {
+				w.Write(v.ExtraData.Payload[5:])
+				idr := v.IDRing.Value.(*AVItem).Value.(*VideoPack)
 				b := make([]byte, 4)
-				utils.BigEndian.PutUint32(b, uint32(length))
+				utils.BigEndian.PutUint32(b, uint32(len(idr.NALUs[0])))
 				w.Write(b)
-				w.Write(payload)
+				w.Write(idr.NALUs[0])
 			} else {
 				w.Write([]byte("no h264 stream"))
 			}
@@ -200,33 +200,33 @@ func getPlugins(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(bytes)
 }
 
-func listenInfo(w http.ResponseWriter, r *http.Request) {
-	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
-		if stream := FindStream(streamPath); stream != nil {
-			sse := utils.NewSSE(w, r.Context())
-			sub := Subscriber{Type: "GateWay", ID: r.RemoteAddr, Ctx2: r.Context()}
-			at := stream.OriginAudioTrack
-			vt := stream.OriginVideoTrack
-			sendList := make([]int, 3)
-			sub.OnAudio = func(pack AudioPack) {
-				sendList[1] = int(at.Buffer.Index)
-				sse.WriteJSON(sendList)
-			}
-			sub.OnVideo = func(pack VideoPack) {
-				sendList[0] = int(vt.Buffer.Index)
-				sendList[1] = int(vt.IDRIndex)
-				sse.WriteJSON(sendList)
-			}
-			sub.Play(at, vt)
-			utils.Println("cancel listenInfo")
-		} else {
-			w.Write([]byte("no such stream"))
-		}
-	} else {
-		w.Write([]byte("no query stream"))
-	}
+// func listenInfo(w http.ResponseWriter, r *http.Request) {
+// 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
+// 		if stream := FindStream(streamPath); stream != nil {
+// 			sse := utils.NewSSE(w, r.Context())
+// 			sub := Subscriber{Type: "GateWay", ID: r.RemoteAddr, Ctx2: r.Context()}
+// 			at := stream.OriginAudioTrack
+// 			vt := stream.OriginVideoTrack
+// 			sendList := make([]int, 3)
+// 			sub.OnAudio = func(pack AudioPack) {
+// 				sendList[1] = int(at.Buffer.Index)
+// 				sse.WriteJSON(sendList)
+// 			}
+// 			sub.OnVideo = func(pack VideoPack) {
+// 				sendList[0] = int(vt.Buffer.Index)
+// 				sendList[1] = int(vt.IDRIndex)
+// 				sse.WriteJSON(sendList)
+// 			}
+// 			sub.Play(at, vt)
+// 			utils.Println("cancel listenInfo")
+// 		} else {
+// 			w.Write([]byte("no such stream"))
+// 		}
+// 	} else {
+// 		w.Write([]byte("no query stream"))
+// 	}
 
-}
+// }
 
 type SnapShot struct {
 	Type    byte
@@ -262,30 +262,30 @@ type SnapShot struct {
 // 		w.Write([]byte("no query stream"))
 // 	}
 // }
-func tagRaw(w http.ResponseWriter, r *http.Request) {
-	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
-		if stream := FindStream(streamPath); stream != nil {
-			t := r.URL.Query().Get("t")
-			if t == "a" {
-				if at := stream.OriginAudioTrack; at != nil {
-					w.Write(at.RtmpTag)
-				} else {
-					w.Write([]byte("no OriginAudioTrack"))
-				}
-			} else {
-				if vt := stream.OriginVideoTrack; vt != nil {
-					w.Write(vt.RtmpTag)
-				} else {
-					w.Write([]byte("no OriginVideoTrack"))
-				}
-			}
-		} else {
-			w.Write([]byte("no such stream"))
-		}
-	} else {
-		w.Write([]byte("no query stream"))
-	}
-}
+// func tagRaw(w http.ResponseWriter, r *http.Request) {
+// 	if streamPath := r.URL.Query().Get("stream"); streamPath != "" {
+// 		if stream := FindStream(streamPath); stream != nil {
+// 			t := r.URL.Query().Get("t")
+// 			if t == "a" {
+// 				if at := stream.OriginAudioTrack; at != nil {
+// 					w.Write(at.RtmpTag)
+// 				} else {
+// 					w.Write([]byte("no OriginAudioTrack"))
+// 				}
+// 			} else {
+// 				if vt := stream.OriginVideoTrack; vt != nil {
+// 					w.Write(vt.RtmpTag)
+// 				} else {
+// 					w.Write([]byte("no OriginVideoTrack"))
+// 				}
+// 			}
+// 		} else {
+// 			w.Write([]byte("no such stream"))
+// 		}
+// 	} else {
+// 		w.Write([]byte("no query stream"))
+// 	}
+// }
 func modifyConfig(w http.ResponseWriter, r *http.Request) {
 	if pluginName := r.URL.Query().Get("name"); pluginName != "" {
 		if plugin, ok := Plugins[pluginName]; ok {
@@ -314,26 +314,4 @@ func modifyConfig(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Write([]byte("no query name"))
 	}
-}
-
-func snapIFrame(sps, pps, payload []byte) (string, error) {
-    buf := bytes.NewBuffer(nil)
-    buf.Write(codec.NALU_Delimiter2)
-    buf.Write(sps)
-
-    buf.Write(codec.NALU_Delimiter2)
-    buf.Write(pps)
-
-    buf.Write(codec.NALU_Delimiter2)
-    buf.Write(payload)
-
-    cmd := exec.Command("ffmpeg", "-i", "pipe:0", "-vframes", "1", "-f", "mjpeg", "pipe:1")
-    cmd.Stdin = bytes.NewReader(buf.Bytes())
-    var out bytes.Buffer
-    cmd.Stdout = &out
-    err := cmd.Run()
-    if err != nil {
-        return "", err
-    }
-    return base64.StdEncoding.EncodeToString(out.Bytes()), nil
 }
