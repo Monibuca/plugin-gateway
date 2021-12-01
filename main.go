@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"mime"
@@ -54,7 +55,13 @@ func run() {
 	http.HandleFunc("/api/gateway/modifyConfig", modifyConfig)
 	http.HandleFunc("/api/gateway/getIFrame", getIFrame)
 	http.HandleFunc("/api/gateway/h264", getH264)
-	http.HandleFunc("/", website)
+	http.HandleFunc("/api/gateway/print", printStream)
+	if config.StaticPath == "ui" {
+		http.Handle("/ui/", http.FileServer(http.FS(ui)))
+		http.Handle("/", http.RedirectHandler("/ui/", http.StatusFound))
+	} else {
+		http.Handle("/", http.FileServer(http.Dir(config.StaticPath)))
+	}
 	utils.Print(Green("server gateway start at "), BrightBlue(config.ListenAddr), BrightBlue(config.ListenAddrTLS))
 	utils.ListenAddrs(config.ListenAddr, config.ListenAddrTLS, config.CertFile, config.KeyFile, nil)
 }
@@ -130,7 +137,7 @@ func website(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Location", "/")
 		w.WriteHeader(302)
 	}
-	
+
 }
 
 func getIFrame(w http.ResponseWriter, r *http.Request) {
@@ -314,4 +321,47 @@ func modifyConfig(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Write([]byte("no query name"))
 	}
+}
+
+type PrintInfo struct {
+	Audio   bool
+	Ts      uint32
+	Cts     uint32
+	Payload string
+}
+
+func printStream(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	if streamPath := query.Get("stream"); streamPath != "" {
+		if stream := FindStream(streamPath); stream != nil {
+			sse := utils.NewSSE(w, r.Context())
+			sub := Subscriber{Type: "GateWayPrint", ID: r.RemoteAddr, Ctx2: r.Context()}
+			var vt *VideoTrack
+			var at *AudioTrack
+			if vtname := query.Get("vt"); vtname != "" {
+				vt = stream.WaitVideoTrack(vtname)
+				sub.OnVideo = func(ts uint32, pack *VideoPack) {
+					sse.WriteJSON(&PrintInfo{
+						Audio:   false,
+						Ts:      ts,
+						Cts:     pack.CompositionTime,
+						Payload: hex.EncodeToString(pack.Payload[5:10]),
+					})
+				}
+			}
+			if atname := query.Get("at"); atname != "" {
+				at = stream.WaitAudioTrack(atname)
+				sub.OnAudio = func(ts uint32, pack *AudioPack) {
+					sse.WriteJSON(&PrintInfo{
+						Audio:   true,
+						Ts:      ts,
+						Cts:     0,
+						Payload: hex.EncodeToString(pack.Payload[:5]),
+					})
+				}
+			}
+			sub.Play(at, vt)
+		}
+	}
+	w.Write([]byte("no query stream"))
 }
