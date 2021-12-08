@@ -331,15 +331,16 @@ type PrintInfo struct {
 }
 
 func printStream(w http.ResponseWriter, r *http.Request) {
+	utils.CORS(w, r)
 	query := r.URL.Query()
 	if streamPath := query.Get("stream"); streamPath != "" {
-		if stream := FindStream(streamPath); stream != nil {
+		sub := Subscriber{Type: "GateWayPrint", ID: r.RemoteAddr, Ctx2: r.Context()}
+		if sub.Subscribe(streamPath) == nil {
 			sse := utils.NewSSE(w, r.Context())
-			sub := Subscriber{Type: "GateWayPrint", ID: r.RemoteAddr, Ctx2: r.Context()}
 			var vt *VideoTrack
 			var at *AudioTrack
 			if vtname := query.Get("vt"); vtname != "" {
-				vt = stream.WaitVideoTrack(vtname)
+				vt = sub.WaitVideoTrack(vtname)
 				sub.OnVideo = func(ts uint32, pack *VideoPack) {
 					sse.WriteJSON(&PrintInfo{
 						Audio:   false,
@@ -350,7 +351,7 @@ func printStream(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			if atname := query.Get("at"); atname != "" {
-				at = stream.WaitAudioTrack(atname)
+				at = sub.WaitAudioTrack(atname)
 				sub.OnAudio = func(ts uint32, pack *AudioPack) {
 					sse.WriteJSON(&PrintInfo{
 						Audio:   true,
@@ -362,6 +363,7 @@ func printStream(w http.ResponseWriter, r *http.Request) {
 			}
 			sub.Play(at, vt)
 		}
+
 	}
 	w.Write([]byte("no query stream"))
 }
