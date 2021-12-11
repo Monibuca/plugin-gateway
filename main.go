@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"embed"
-	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -339,25 +339,41 @@ func printStream(w http.ResponseWriter, r *http.Request) {
 			sse := utils.NewSSE(w, r.Context())
 			var vt *VideoTrack
 			var at *AudioTrack
+			showLen, err := strconv.Atoi(query.Get("len"))
+			if err != nil {
+				showLen = 5
+			}
 			if vtname := query.Get("vt"); vtname != "" {
 				vt = sub.WaitVideoTrack(vtname)
 				sub.OnVideo = func(ts uint32, pack *VideoPack) {
+					payload := pack.Payload
+					if len(pack.Payload) < 7+showLen {
+						if len(pack.Payload) > 7 {
+							payload = pack.Payload[7:]
+						}
+					} else {
+						payload = pack.Payload[7 : 7+showLen]
+					}
 					sse.WriteJSON(&PrintInfo{
 						Audio:   false,
 						Ts:      ts,
 						Cts:     pack.CompositionTime,
-						Payload: hex.EncodeToString(pack.Payload[5:10]),
+						Payload: fmt.Sprintf("% X", payload),
 					})
 				}
 			}
 			if atname := query.Get("at"); atname != "" {
 				at = sub.WaitAudioTrack(atname)
 				sub.OnAudio = func(ts uint32, pack *AudioPack) {
+					l := len(pack.Payload)
+					if l > showLen {
+						l = showLen
+					}
 					sse.WriteJSON(&PrintInfo{
 						Audio:   true,
 						Ts:      ts,
 						Cts:     0,
-						Payload: hex.EncodeToString(pack.Payload[:5]),
+						Payload: fmt.Sprintf("% X", pack.Payload[:l]),
 					})
 				}
 			}
