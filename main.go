@@ -40,9 +40,8 @@ func init() {
 	plugin := &PluginConfig{
 		Name:   "GateWay",
 		Config: &config,
-		Run:    run,
 	}
-	InstallPlugin(plugin)
+	plugin.Install(run)
 }
 func run() {
 	http.HandleFunc("/api/gateway/sysInfo", sysInfo)
