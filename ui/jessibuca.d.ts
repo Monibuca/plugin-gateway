@@ -142,6 +142,24 @@ declare namespace Jessibuca {
          * 目前支持的键盘快捷键有：esc -> 退出全屏；arrowUp -> 声音增加；arrowDown -> 声音减少；
          */
         hotKey?: boolean;
+        /**
+         *  在使用MSE或者Webcodecs 播放H265的时候，是否自动降级到wasm模式。
+         *  设置为false 则直接关闭播放，抛出Error 异常，设置为true 则会自动切换成wasm模式播放。
+         */
+        autoWasm?: boolean;
+        /**
+         * heartTimeout 心跳超时之后自动再播放,不再抛出异常，而直接重新播放视频地址。
+         */
+        heartTimeoutReplay?: boolean,
+        /**
+         * wasm解码报错之后，不再抛出异常，而是直接重新播放视频地址。
+         */
+        wasmDecodeErrorReplay?: boolean,
+        /**
+         * https://github.com/langhuihui/jessibuca/issues/152 解决方案
+         * 例如：WebGL图像预处理默认每次取4字节的数据，但是540x960分辨率下的U、V分量宽度是540/2=270不能被4整除，导致绿屏。
+         */
+        openWebglAlignment?: boolean
     }
 }
 
@@ -354,7 +372,7 @@ declare class Jessibuca {
 
      const fileBlob = jessibuca.screenshot("test",'blob')
      */
-    screenshot(filename?: string, format?: string, quality?: number, type?: string);
+    screenshot(filename?: string, format?: string, quality?: number, type?: string): void;
 
     /**
      * 开始录制。
@@ -364,14 +382,14 @@ declare class Jessibuca {
      @example
      jessibuca.startRecord('xxx','webm')
      */
-    startRecord(fileName: string, fileType: string)
+    startRecord(fileName: string, fileType: string): void;
 
     /**
      * 暂停录制并下载。
      @example
      jessibuca.stopRecordAndSave()
      */
-    stopRecordAndSave();
+    stopRecordAndSave(): void;
 
     /**
      * 返回是否正在播放中状态。
@@ -576,7 +594,7 @@ declare class Jessibuca {
      * @param event
      * @param callback
      */
-    on(event: 'playToRenderTimes', callback: (times:{
+    on(event: 'playToRenderTimes', callback: (times: {
         playInitStart: number, // 1 初始化
         playStart: number, // 2 初始化
         streamStart: number, // 3 网络请求
