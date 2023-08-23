@@ -2,6 +2,10 @@
 
 该插件主要提供http协议访问，供其他插件公用http接口端口，并且提供一些基础的API
 
+## UI
+
+如需要ui源码，可联系微信：bosswancheng
+
 ## 插件地址
 
 github.com/Monibuca/plugin-gateway
